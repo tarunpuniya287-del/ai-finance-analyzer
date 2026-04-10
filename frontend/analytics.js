@@ -2,7 +2,7 @@ const COLORS = ['#6366f1','#10b981','#f43f5e','#f59e0b','#8b5cf6','#06b6d4','#ec
 
 async function loadAnalytics() {
     try {
-        const res = await fetch('http://localhost:5000/api/transactions');
+        const res = await fetch('https://ai-finance-analyzer-abas.onrender.com/api/transactions');
         const data = await res.json();
 
         const catData = {};

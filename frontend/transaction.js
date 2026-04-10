@@ -72,7 +72,7 @@
 
 
 
-const API_URL = 'http://localhost:5000/api/transactions'; 
+const API_URL = 'https://ai-finance-analyzer-abas.onrender.com/api/transactions'; 
 let allTransactions = []; // Global store for filtering
 
 async function fetchTransactions() {

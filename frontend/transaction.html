@@ -174,7 +174,7 @@
 </div>
 
 <script>
-const API_URL = 'http://localhost:5000/api/transactions';
+const API_URL = 'https://ai-finance-analyzer-abas.onrender.com/api/transactions';
 let allTransactions = [];
 let currentTab = 'all';
 
@@ -253,7 +253,7 @@ function applyFilters() {
 async function deleteTransaction(id) {
     if (!confirm('Delete this transaction?')) return;
     try {
-        await fetch(`http://localhost:5000/api/transactions/${id}`, { method: 'DELETE' });
+        await fetch(`https://ai-finance-analyzer-abas.onrender.com/api/transactions/${id}`, { method: 'DELETE' });
         allTransactions = allTransactions.filter(t => t._id !== id);
         updateStats(allTransactions);
         applyFilters();
