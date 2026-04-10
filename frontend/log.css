@@ -1,0 +1,246 @@
+/* 
+.container {
+  max-width: 350px;
+  background: #F8F9FD;
+  background: linear-gradient(0deg, rgb(255, 255, 255) 0%, rgb(244, 247, 251) 100%);
+  border-radius: 40px;
+  padding: 25px 35px;
+  border: 5px solid rgb(255, 255, 255);
+  box-shadow: rgba(133, 189, 215, 0.8784313725) 0px 30px 30px -20px;
+  margin: 20px;
+  align-items: center;
+}
+
+/* body {
+  display: flex;
+  justify-content: center;   /* Centers horizontally */
+  /* align-items: center;       Centers vertically */
+  /* height: 100vh;             /* Full viewport height */
+  /* margin: 0;                 Remove default browser margin */ */
+  /* background: linear-gradient(-45deg, #f0f4f8, #e0eafc, #cfdef3, #f0f4f8); */
+  /* background-size: 400px 400px   Smaller scale so gradient looks bigger */
+/* } */ */
+
+/* .login-box {
+  width: 420px;              /* Container width */
+  /* padding: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1); */
+/* } */ */
+
+/* .login-box input[type="email"] {
+  width: 40%;               /* Fill container width */
+  /* padding: 12px;             /* Inner spacing */
+  /* margin: 10px 0;            /* Gap around */
+  /* border: 2px solid #ccc;
+  border-radius: 4px;
+  font-size: 2%;
+  box-sizing: content-box;    Prevent overflow */ */
+/* } */ 
+
+
+/* .heading {
+  text-align: center;
+  font-weight: 900;
+  font-size: 30px;
+  color: rgb(16, 137, 211);
+}
+
+.form {
+  margin-top: 20px;
+} */
+/* 
+.form .input {
+  width: 80%;
+  background: white;
+  border: none;
+  padding: 15px 20px;
+  border-radius: 15px;
+  margin-top: 15px;
+  box-shadow: #cff0ff 0px 10px 10px -5px;
+  border-inline: 2px solid transparent;
+} */
+
+/* .form .login-button {
+  display: block;
+  width: 100%;
+  font-weight: bold;
+  background: linear-gradient(45deg, rgb(16, 137, 211) 0%, rgb(18, 177, 209) 100%);
+  color: white;
+  padding-block: 15px;
+  margin: 20px auto;
+  border-radius: 20px;
+  box-shadow: rgba(133, 189, 215, 0.8784313725) 0px 20px 10px -15px;
+  border: none;
+  transition: all 0.2s ease-in-out;
+} */
+/*  */
+
+/* 
+.social-account-container .title {
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  color: rgb(170, 170, 170);
+} */
+
+/* .social-account-container .social-accounts {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 5px;
+} */
+
+/* .social-account-container .social-accounts .social-button {
+  background: linear-gradient(45deg, rgb(255, 255, 255) 0%, rgb(69, 127, 234) 100%);
+  border: 5px solid white;
+  padding: 5px;
+  border-radius: 50%;
+  width: 40px;
+  aspect-ratio: 1;
+  display: grid;
+  place-content: center;
+  box-shadow: rgba(2, 109, 159, 0.878) 0px 12px 10px -8px;
+  transition: all 0.2s ease-in-out;
+/* } */  
+
+:root {
+  --primary: #1089d3;
+  --secondary: #12b1d1;
+  --bg-gradient: linear-gradient(-45deg, #f0f4f8, #e0eafc, #cfdef3, #f0f4f8);
+  --glass: rgba(18, 1, 1, 0.9);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-gradient);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.container {
+  width: 100%;
+  max-width: 400px;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  border-radius: 30px;
+  padding: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box; /* Padding se width na bade */
+}
+
+.heading {
+  text-align: center;
+  font-weight: 800;
+  font-size: 28px;
+  color: var(--primary);
+  margin-bottom: 30px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Input Fields Styling */
+.form .input {
+  width: 100%;
+  background: #ffffff;
+  border: 2px solid #eef2f6;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #333;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.form .input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(16, 137, 211, 0.1);
+}
+
+/* Primary Button */
+.login-button {
+  width: 100%;
+  font-weight: bold;
+  font-size: 16px;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: white;
+  padding: 15px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(16, 137, 211, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 25px rgba(16, 137, 211, 0.4);
+}
+
+/* Social Buttons Section */
+.social-account-container {
+  margin-top: 25px;
+  text-align: center;
+}
+
+.social-account-container .title {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.social-accounts {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.social-button {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.social-button:hover {
+  background: #f8f9fa;
+  transform: scale(1.1);
+  border-color: var(--primary);
+}
+
+/* Google Icon Specific Style (Optional) */
+.social-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+

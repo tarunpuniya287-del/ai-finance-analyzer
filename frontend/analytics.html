@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analytics | AI Finance Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1; --income: #10b981; --expense: #f43f5e;
+            --sidebar: #0f172a; --bg: #f1f5f9; --card: #ffffff;
+            --text: #1e293b; --muted: #64748b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--sidebar); height: 100vh; padding: 28px 20px; position: fixed; display: flex; flex-direction: column; gap: 6px; z-index: 100; }
+        .sidebar-brand { display: flex; align-items: center; gap: 10px; color: white; font-size: 18px; font-weight: 800; margin-bottom: 32px; padding: 0 8px; }
+        .sidebar-brand .brand-icon { width: 36px; height: 36px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-link { color: #94a3b8; text-decoration: none; padding: 12px 16px; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; }
+        .nav-link:hover { background: rgba(255,255,255,0.06); color: white; }
+        .nav-link.active { background: var(--primary); color: white; box-shadow: 0 8px 20px rgba(99,102,241,0.35); }
+        .nav-link i { width: 18px; text-align: center; }
+        .sidebar-footer { margin-top: auto; }
+        .logout-btn { color: #f43f5e; text-decoration: none; padding: 12px 16px; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; cursor: pointer; background: none; border: none; width: 100%; font-family: inherit; }
+        .logout-btn:hover { background: rgba(244,63,94,0.1); }
+
+        /* Main */
+        .main { margin-left: 260px; padding: 32px 40px; width: calc(100% - 260px); }
+
+        /* Header */
+        .page-header { margin-bottom: 28px; }
+        .page-header h1 { font-size: 24px; font-weight: 800; color: var(--text); }
+        .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+        /* Summary Cards */
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
+        .sum-card { background: var(--card); border-radius: 18px; padding: 20px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
+        .sum-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 4px 0 0 4px; }
+        .sum-card.income::before { background: var(--income); }
+        .sum-card.expense::before { background: var(--expense); }
+        .sum-card.savings::before { background: var(--primary); }
+        .sum-card.txcount::before { background: #f59e0b; }
+        .sum-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+        .sum-value { font-size: 22px; font-weight: 800; color: var(--text); margin-top: 6px; }
+
+        /* Charts Grid */
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .chart-card { background: var(--card); border-radius: 20px; padding: 26px; border: 1px solid #f1f5f9; }
+        .chart-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .chart-title i { color: var(--primary); }
+        .chart-wrap { position: relative; height: 280px; }
+
+        /* Category breakdown list */
+        .cat-list { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+        .cat-item { display: flex; align-items: center; gap: 12px; }
+        .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .cat-name { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+        .cat-bar-wrap { flex: 2; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+        .cat-bar { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        .cat-amount { font-size: 13px; font-weight: 700; color: var(--text); min-width: 80px; text-align: right; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">💰</div>
+        AI Finance
+    </div>
+    <a href="index.html" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+    <a href="transaction.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transactions</a>
+    <a href="#" class="nav-link active"><i class="fas fa-chart-line"></i> Analytics</a>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="page-header">
+        <h1>Financial Insights 📊</h1>
+        <p>A complete picture of your money flow</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+        <div class="sum-card income">
+            <div class="sum-label">Total Income</div>
+            <div class="sum-value" id="sumIncome">₹0</div>
+        </div>
+        <div class="sum-card expense">
+            <div class="sum-label">Total Expenses</div>
+            <div class="sum-value" id="sumExpense">₹0</div>
+        </div>
+        <div class="sum-card savings">
+            <div class="sum-label">Net Savings</div>
+            <div class="sum-value" id="sumSavings">₹0</div>
+        </div>
+        <div class="sum-card txcount">
+            <div class="sum-label">Transactions</div>
+            <div class="sum-value" id="sumCount">0</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-title"><i class="fas fa-chart-pie"></i> Spending Breakdown</div>
+            <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title"><i class="fas fa-chart-bar"></i> Income vs Expenses</div>
+            <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-title"><i class="fas fa-list"></i> Category-wise Spending</div>
+        <div class="cat-list" id="catList"></div>
+    </div>
+</div>
+
+<script src="analytics.js"></script>
+</body>
+</html>

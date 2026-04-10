@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Finance | Sign In</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* ── LEFT PANEL ── */
+        .left-panel {
+            background: linear-gradient(135deg, #5b21b6 0%, #6d28d9 50%, #7c3aed 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            z-index: 2;
+        }
+
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+
+        /* Characters Stage */
+        .characters-stage {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 420px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .character {
+            position: absolute;
+            bottom: 0;
+            border-radius: 10px 10px 0 0;
+            transition: transform 0.7s ease, height 0.7s ease;
+            transform-origin: bottom center;
+        }
+
+        /* Purple - back */
+        #char-purple {
+            left: 70px; width: 180px; height: 400px;
+            background: #6C3FF5; z-index: 1;
+            border-radius: 10px 10px 0 0;
+        }
+
+        /* Black - middle */
+        #char-black {
+            left: 240px; width: 120px; height: 310px;
+            background: #2D2D2D; z-index: 2;
+            border-radius: 8px 8px 0 0;
+        }
+
+        /* Orange - front left (semicircle) */
+        #char-orange {
+            left: 0px; width: 240px; height: 200px;
+            background: #FF9B6B; z-index: 3;
+            border-radius: 120px 120px 0 0;
+        }
+
+        /* Yellow - front right (rounded top) */
+        #char-yellow {
+            left: 310px; width: 140px; height: 230px;
+            background: #E8D754; z-index: 4;
+            border-radius: 70px 70px 0 0;
+        }
+
+        .eyes {
+            position: absolute;
+            display: flex;
+            gap: 8px;
+            transition: left 0.7s ease, top 0.7s ease;
+        }
+
+        .eyeball {
+            border-radius: 50%;
+            background: white;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            transition: height 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .pupil {
+            border-radius: 50%;
+            background: #2D2D2D;
+            transition: transform 0.1s ease-out;
+            flex-shrink: 0;
+        }
+
+        /* Pupils only (no white) for orange & yellow */
+        .pupil-only {
+            border-radius: 50%;
+            background: #2D2D2D;
+            transition: transform 0.1s ease-out;
+            flex-shrink: 0;
+        }
+
+        .char-mouth {
+            position: absolute;
+            height: 4px;
+            background: #2D2D2D;
+            border-radius: 2px;
+            width: 80px;
+            transition: left 0.2s ease, top 0.2s ease;
+        }
+
+        /* Footer links */
+        .left-footer {
+            display: flex; gap: 24px; z-index: 2;
+        }
+        .left-footer a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none; font-size: 13px;
+            transition: color 0.2s;
+        }
+        .left-footer a:hover { color: white; }
+
+        /* Decorative blobs */
+        .blob1, .blob2 {
+            position: absolute; border-radius: 50%;
+            filter: blur(60px); pointer-events: none;
+        }
+        .blob1 { width: 300px; height: 300px; background: rgba(255,255,255,0.07); top: 20%; right: 10%; }
+        .blob2 { width: 400px; height: 400px; background: rgba(255,255,255,0.04); bottom: 15%; left: 5%; }
+
+        /* ── RIGHT PANEL ── */
+        .right-panel {
+            background: #ffffff;
+            display: flex; align-items: center; justify-content: center;
+            padding: 40px;
+        }
+
+        .login-box { width: 100%; max-width: 400px; }
+
+        .login-box h1 {
+            font-size: 28px; font-weight: 800;
+            color: #0f172a; margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .login-box .subtitle {
+            text-align: center; color: #64748b;
+            font-size: 14px; margin-bottom: 32px;
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        .form-group label {
+            display: block; font-size: 14px;
+            font-weight: 600; color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%; height: 48px;
+            padding: 0 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px; font-size: 15px;
+            color: #1e293b; background: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #6d28d9;
+            box-shadow: 0 0 0 3px rgba(109,40,217,0.1);
+        }
+
+        .password-wrap { position: relative; }
+        .password-wrap input { padding-right: 44px; }
+
+        .toggle-pw {
+            position: absolute; right: 14px; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            cursor: pointer; color: #94a3b8;
+            font-size: 18px; line-height: 1;
+            transition: color 0.2s;
+        }
+        .toggle-pw:hover { color: #475569; }
+
+        .form-options {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px;
+        }
+
+        .remember {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: #475569; cursor: pointer;
+        }
+
+        .remember input[type="checkbox"] {
+            width: 16px; height: 16px;
+            accent-color: #6d28d9; cursor: pointer;
+        }
+
+        .forgot { font-size: 13px; color: #6d28d9; text-decoration: none; font-weight: 600; }
+        .forgot:hover { text-decoration: underline; }
+
+        .error-msg {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #ef4444; border-radius: 8px;
+            padding: 10px 14px; font-size: 13px;
+            margin-bottom: 16px; display: none;
+        }
+
+        .btn-login {
+            width: 100%; height: 48px;
+            background: #6d28d9; color: white;
+            border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(109,40,217,0.3);
+        }
+
+        .btn-login:hover:not(:disabled) {
+            background: #5b21b6;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(109,40,217,0.4);
+        }
+
+        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 20px 0; color: #94a3b8; font-size: 13px;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1;
+            height: 1px; background: #e2e8f0;
+        }
+
+        .btn-google {
+            width: 100%; height: 48px;
+            background: white; color: #1e293b;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-size: 15px; font-weight: 600;
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 10px;
+            transition: background 0.2s, border-color 0.2s;
+            text-decoration: none;
+        }
+        .btn-google:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+        .signup-link {
+            text-align: center; margin-top: 24px;
+            font-size: 14px; color: #64748b;
+        }
+        .signup-link a { color: #1e293b; font-weight: 700; text-decoration: none; }
+        .signup-link a:hover { text-decoration: underline; }
+
+        /* OTP section */
+        #otp-section { display: none; }
+
+        /* Loader spinner */
+        .spinner {
+            width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block; vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            body { grid-template-columns: 1fr; }
+            .left-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══ LEFT PANEL ══ -->
+<div class="left-panel">
+    <div class="brand">
+        <div class="brand-icon">✦</div>
+        AI Finance
+    </div>
+
+    <div class="characters-stage" id="stage">
+        <!-- Purple character -->
+        <div class="character" id="char-purple">
+            <div class="eyes" id="eyes-purple" style="left:45px; top:40px; gap:20px;">
+                <div class="eyeball" id="eye-p1" style="width:18px;height:18px;">
+                    <div class="pupil" id="pupil-p1" style="width:7px;height:7px;"></div>
+                </div>
+                <div class="eyeball" id="eye-p2" style="width:18px;height:18px;">
+                    <div class="pupil" id="pupil-p2" style="width:7px;height:7px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Black character -->
+        <div class="character" id="char-black">
+            <div class="eyes" id="eyes-black" style="left:26px; top:32px; gap:16px;">
+                <div class="eyeball" id="eye-b1" style="width:16px;height:16px;">
+                    <div class="pupil" id="pupil-b1" style="width:6px;height:6px;"></div>
+                </div>
+                <div class="eyeball" id="eye-b2" style="width:16px;height:16px;">
+                    <div class="pupil" id="pupil-b2" style="width:6px;height:6px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orange character -->
+        <div class="character" id="char-orange">
+            <div class="eyes" id="eyes-orange" style="left:82px; top:90px; gap:20px;">
+                <div class="pupil-only" id="pupil-o1" style="width:12px;height:12px;"></div>
+                <div class="pupil-only" id="pupil-o2" style="width:12px;height:12px;"></div>
+            </div>
+        </div>
+
+        <!-- Yellow character -->
+        <div class="character" id="char-yellow">
+            <div class="eyes" id="eyes-yellow" style="left:52px; top:40px; gap:16px;">
+                <div class="pupil-only" id="pupil-y1" style="width:12px;height:12px;"></div>
+                <div class="pupil-only" id="pupil-y2" style="width:12px;height:12px;"></div>
+            </div>
+            <div class="char-mouth" id="mouth-yellow" style="left:40px; top:88px;"></div>
+        </div>
+    </div>
+
+    <div class="left-footer">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Contact</a>
+    </div>
+
+    <div class="blob1"></div>
+    <div class="blob2"></div>
+</div>
+
+<!-- ══ RIGHT PANEL ══ -->
+<div class="right-panel">
+    <div class="login-box">
+        <h1 id="form-title">Welcome back!</h1>
+        <p class="subtitle">Please enter your details</p>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="you@example.com" required autocomplete="off">
+            </div>
+
+            <div id="otp-section" class="form-group">
+                <label for="otp">OTP (sent to your email)</label>
+                <input type="text" id="otp" placeholder="Enter 6-digit OTP" maxlength="6">
+            </div>
+
+            <div id="password-section" class="form-group" style="display:none;">
+                <label for="password">Password</label>
+                <div class="password-wrap">
+                    <input type="password" id="password" placeholder="••••••••">
+                    <button type="button" class="toggle-pw" id="togglePw" onclick="togglePassword()">👁</button>
+                </div>
+            </div>
+
+            <div class="form-options">
+                <label class="remember">
+                    <input type="checkbox" id="remember"> Remember for 30 days
+                </label>
+                <a href="#" class="forgot">Forgot password?</a>
+            </div>
+
+            <div class="error-msg" id="errorMsg"></div>
+
+            <button type="submit" class="btn-login" id="mainBtn">Next</button>
+        </form>
+
+        <div class="divider">Or sign in with</div>
+
+        <a href="http://localhost:5000/auth/google" class="btn-google">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+        </a>
+
+        <div class="signup-link">
+            Don't have an account? <a href="#">Sign Up</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// ══ STATE ══
+let step = 1;
+let isNewUser = false;
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let isPurpleBlinking = false;
+let isBlackBlinking = false;
+let isTypingEmail = false;
+let isPasswordVisible = false;
+let passwordValue = '';
+
+// ══ MOUSE TRACKING ══
+document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    if (!isTypingEmail) updateEyes();
+});
+
+// ══ EYE TRACKING ══
+function getCharCenter(el) {
+    const rect = el.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 3 };
+}
+
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
+function calcPupilOffset(charEl, maxDist) {
+    const c = getCharCenter(charEl);
+    const dx = mouseX - c.x, dy = mouseY - c.y;
+    const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDist);
+    const angle = Math.atan2(dy, dx);
+    return { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist };
+}
+
+function updateEyes() {
+    const purple = document.getElementById('char-purple');
+    const black  = document.getElementById('char-black');
+    const orange = document.getElementById('char-orange');
+    const yellow = document.getElementById('char-yellow');
+
+    // Body lean
+    const stageRect = document.getElementById('stage').getBoundingClientRect();
+    const stageCX = stageRect.left + stageRect.width / 2;
+    const dx = mouseX - stageCX;
+
+    const purpleSkew = clamp(-dx / 120, -6, 6);
+    const blackSkew  = clamp(-dx / 100, -6, 6);
+    const orangeSkew = clamp(-dx / 130, -5, 5);
+    const yellowSkew = clamp(-dx / 130, -5, 5);
+
+    purple.style.transform = `skewX(${purpleSkew}deg)`;
+    black.style.transform  = `skewX(${blackSkew}deg)`;
+    orange.style.transform = `skewX(${orangeSkew}deg)`;
+    yellow.style.transform = `skewX(${yellowSkew}deg)`;
+
+    // Pupil movement
+    movePupils('pupil-p1', 'pupil-p2', purple, 5);
+    movePupils('pupil-b1', 'pupil-b2', black, 4);
+    movePupilsOnly('pupil-o1', 'pupil-o2', orange, 5);
+    movePupilsOnly('pupil-y1', 'pupil-y2', yellow, 5);
+
+    // Mouth follow
+    const mouth = document.getElementById('mouth-yellow');
+    const yPos = getCharCenter(yellow);
+    const mdy = mouseY - yPos.y;
+    mouth.style.top = (88 + clamp(mdy / 30, -8, 8)) + 'px';
+}
+
+function movePupils(id1, id2, charEl, maxDist) {
+    const off = calcPupilOffset(charEl, maxDist);
+    [id1, id2].forEach(id => {
+        document.getElementById(id).style.transform = `translate(${off.x}px, ${off.y}px)`;
+    });
+}
+
+function movePupilsOnly(id1, id2, charEl, maxDist) {
+    movePupils(id1, id2, charEl, maxDist);
+}
+
+// ══ BLINKING ══
+function scheduleBlink(setFn, eyeIds) {
+    const delay = Math.random() * 4000 + 3000;
+    setTimeout(() => {
+        eyeIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.height = '2px';
+        });
+        setTimeout(() => {
+            eyeIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.height = el.dataset.size + 'px';
+            });
+            scheduleBlink(setFn, eyeIds);
+        }, 150);
+    }, delay);
+}
+
+// Store original sizes
+['eye-p1','eye-p2'].forEach(id => { const el = document.getElementById(id); if(el) el.dataset.size = 18; });
+['eye-b1','eye-b2'].forEach(id => { const el = document.getElementById(id); if(el) el.dataset.size = 16; });
+
+scheduleBlink(null, ['eye-p1','eye-p2']);
+scheduleBlink(null, ['eye-b1','eye-b2']);
+
+// ══ PASSWORD VISIBILITY ANIMATION ══
+// When password is visible, characters look away (cover eyes)
+function onPasswordToggle(visible) {
+    const purple = document.getElementById('char-purple');
+    const black  = document.getElementById('char-black');
+    const orange = document.getElementById('char-orange');
+    const yellow = document.getElementById('char-yellow');
+
+    if (visible) {
+        // Characters look away / hide
+        purple.style.transform = 'skewX(-12deg) translateX(40px)';
+        black.style.transform  = 'skewX(10deg) translateX(20px)';
+        orange.style.transform = 'skewX(-8deg)';
+        yellow.style.transform = 'skewX(8deg)';
+
+        // Force pupils to look away
+        ['pupil-p1','pupil-p2'].forEach(id => {
+            document.getElementById(id).style.transform = 'translate(-4px, -4px)';
+        });
+        ['pupil-b1','pupil-b2'].forEach(id => {
+            document.getElementById(id).style.transform = 'translate(-4px, -4px)';
+        });
+        ['pupil-o1','pupil-o2'].forEach(id => {
+            document.getElementById(id).style.transform = 'translate(-5px, -4px)';
+        });
+        ['pupil-y1','pupil-y2'].forEach(id => {
+            document.getElementById(id).style.transform = 'translate(-5px, -4px)';
+        });
+    } else {
+        updateEyes();
+    }
+}
+
+// ══ EMAIL FOCUS: characters look at each other ══
+function onEmailFocus() {
+    isTypingEmail = true;
+    const purple = document.getElementById('char-purple');
+    const black  = document.getElementById('char-black');
+
+    purple.style.transform = 'skewX(-8deg) translateX(20px)';
+    black.style.transform  = 'skewX(8deg) translateX(10px)';
+
+    ['pupil-p1','pupil-p2'].forEach(id => {
+        document.getElementById(id).style.transform = 'translate(3px, 4px)';
+    });
+    ['pupil-b1','pupil-b2'].forEach(id => {
+        document.getElementById(id).style.transform = 'translate(0px, -4px)';
+    });
+
+    setTimeout(() => { isTypingEmail = false; updateEyes(); }, 800);
+}
+
+// ══ TOGGLE PASSWORD ══
+function togglePassword() {
+    const pwInput = document.getElementById('password');
+    const btn = document.getElementById('togglePw');
+    isPasswordVisible = !isPasswordVisible;
+    pwInput.type = isPasswordVisible ? 'text' : 'password';
+    btn.textContent = isPasswordVisible ? '🙈' : '👁';
+    onPasswordToggle(isPasswordVisible);
+}
+
+// ══ FORM LOGIC ══
+document.getElementById('email').addEventListener('focus', onEmailFocus);
+document.getElementById('password').addEventListener('input', (e) => {
+    passwordValue = e.target.value;
+    if (passwordValue.length > 0 && !isPasswordVisible) {
+        // Characters peek up slightly
+        document.getElementById('char-purple').style.height = '440px';
+    } else {
+        document.getElementById('char-purple').style.height = '400px';
+    }
+});
+
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const email    = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const otp      = document.getElementById('otp').value;
+    const btn      = document.getElementById('mainBtn');
+    const errEl    = document.getElementById('errorMsg');
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Please wait...';
+
+    try {
+        if (step === 1) {
+            const res  = await fetch('http://localhost:5000/api/check-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+
+            if (data.exists) {
+                if (data.isGoogleUser) {
+                    showError('You signed up with Google. Please use "Continue with Google".');
+                    btn.disabled = false;
+                    btn.textContent = 'Next';
+                    return;
+                }
+                isNewUser = false;
+                document.getElementById('form-title').textContent = 'Welcome back!';
+            } else {
+                isNewUser = true;
+                document.getElementById('form-title').textContent = 'Create Account';
+                document.getElementById('otp-section').style.display = 'block';
+                alert('OTP sent to your email!');
+            }
+
+            document.getElementById('password-section').style.display = 'block';
+            document.getElementById('password').required = true;
+            btn.textContent = 'Sign In';
+            step = 2;
+
+        } else {
+            const res  = await fetch('http://localhost:5000/api/auth/final', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, otp, isNewUser })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userEmail', email);
+                window.location.href = 'index.html';
+            } else {
+                showError(data.message || 'Something went wrong. Try again.');
+            }
+        }
+    } catch (err) {
+        showError('Server offline. Please check if backend is running.');
+    }
+
+    btn.disabled = false;
+    btn.textContent = step === 1 ? 'Next' : 'Sign In';
+});
+
+function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
+// Init eye positions
+updateEyes();
+</script>
+</body>
+</html>

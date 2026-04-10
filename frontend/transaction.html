@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transactions | AI Finance Pro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1; --income: #10b981; --expense: #f43f5e;
+            --sidebar: #0f172a; --bg: #f1f5f9; --card: #ffffff;
+            --text: #1e293b; --muted: #64748b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--sidebar); height: 100vh; padding: 28px 20px; position: fixed; display: flex; flex-direction: column; gap: 6px; z-index: 100; }
+        .sidebar-brand { display: flex; align-items: center; gap: 10px; color: white; font-size: 18px; font-weight: 800; margin-bottom: 32px; padding: 0 8px; }
+        .sidebar-brand .brand-icon { width: 36px; height: 36px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-link { color: #94a3b8; text-decoration: none; padding: 12px 16px; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; }
+        .nav-link:hover { background: rgba(255,255,255,0.06); color: white; }
+        .nav-link.active { background: var(--primary); color: white; box-shadow: 0 8px 20px rgba(99,102,241,0.35); }
+        .nav-link i { width: 18px; text-align: center; }
+        .sidebar-footer { margin-top: auto; }
+        .logout-btn { color: #f43f5e; text-decoration: none; padding: 12px 16px; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; cursor: pointer; background: none; border: none; width: 100%; font-family: inherit; }
+        .logout-btn:hover { background: rgba(244,63,94,0.1); }
+
+        /* Main */
+        .main { margin-left: 260px; padding: 32px 40px; width: calc(100% - 260px); }
+
+        /* Header */
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+        .page-header h1 { font-size: 24px; font-weight: 800; color: var(--text); }
+        .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px; }
+        .stat-card { background: var(--card); border-radius: 20px; padding: 22px 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 4px 0 0 4px; }
+        .stat-card.income::before { background: var(--income); }
+        .stat-card.expense::before { background: var(--expense); }
+        .stat-card.savings::before { background: var(--primary); }
+        .stat-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 12px; }
+        .stat-card.income .stat-icon { background: #ecfdf5; color: var(--income); }
+        .stat-card.expense .stat-icon { background: #fff1f2; color: var(--expense); }
+        .stat-card.savings .stat-icon { background: #eef2ff; color: var(--primary); }
+        .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+        .stat-value { font-size: 26px; font-weight: 800; color: var(--text); margin-top: 4px; }
+
+        /* Table Card */
+        .table-card { background: var(--card); border-radius: 24px; padding: 28px; border: 1px solid #f1f5f9; }
+
+        /* Toolbar */
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+        .tab-group { display: flex; gap: 6px; background: #f1f5f9; padding: 5px; border-radius: 14px; }
+        .tab-btn { padding: 9px 22px; border: none; border-radius: 10px; cursor: pointer; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; transition: 0.2s; font-family: inherit; }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+
+        .toolbar-right { display: flex; gap: 10px; align-items: center; }
+        .search-box { display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 9px 14px; }
+        .search-box input { border: none; background: none; outline: none; font-size: 13px; color: var(--text); font-family: inherit; width: 160px; }
+        .search-box i { color: var(--muted); font-size: 13px; }
+
+        .btn-export { background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 10px 20px; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; font-family: inherit; transition: 0.2s; box-shadow: 0 4px 12px rgba(16,185,129,0.25); }
+        .btn-export:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16,185,129,0.35); }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { border-bottom: 2px solid #f1f5f9; }
+        th { text-align: left; padding: 12px 16px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        tbody tr { border-bottom: 1px solid #f8fafc; transition: background 0.15s; }
+        tbody tr:hover { background: #f8fafc; }
+        td { padding: 16px; font-size: 14px; color: var(--text); font-weight: 500; }
+
+        .tx-desc { display: flex; align-items: center; gap: 12px; }
+        .tx-emoji { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .tx-emoji.income { background: #ecfdf5; }
+        .tx-emoji.expense { background: #fff1f2; }
+        .tx-name { font-weight: 600; font-size: 14px; }
+        .tx-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        .badge { padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .badge-income { color: #059669; background: #ecfdf5; }
+        .badge-expense { color: #dc2626; background: #fff1f2; }
+
+        .amount-income { color: var(--income); font-weight: 800; font-size: 15px; }
+        .amount-expense { color: var(--expense); font-weight: 800; font-size: 15px; }
+
+        .btn-delete { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 6px 8px; border-radius: 8px; transition: 0.2s; font-size: 14px; }
+        .btn-delete:hover { background: #fff1f2; color: var(--expense); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .empty-state i { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+        .empty-state p { font-size: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">💰</div>
+        AI Finance
+    </div>
+    <a href="index.html" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+    <a href="#" class="nav-link active"><i class="fas fa-exchange-alt"></i> Transactions</a>
+    <a href="analytics.html" class="nav-link"><i class="fas fa-chart-line"></i> Analytics</a>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="page-header">
+        <div>
+            <h1>Transactions</h1>
+            <p>Track every rupee — income & expenses</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card income">
+            <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+            <div class="stat-label">Total Income</div>
+            <div class="stat-value" id="totalIncome">₹0</div>
+        </div>
+        <div class="stat-card expense">
+            <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+            <div class="stat-label">Total Expense</div>
+            <div class="stat-value" id="totalExpense">₹0</div>
+        </div>
+        <div class="stat-card savings">
+            <div class="stat-icon"><i class="fas fa-piggy-bank"></i></div>
+            <div class="stat-label">Net Savings</div>
+            <div class="stat-value" id="netSavings">₹0</div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="toolbar">
+            <div class="tab-group">
+                <button class="tab-btn active" onclick="switchTab('all', this)">All</button>
+                <button class="tab-btn" onclick="switchTab('income', this)">Income</button>
+                <button class="tab-btn" onclick="switchTab('expense', this)">Expense</button>
+            </div>
+            <div class="toolbar-right">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search transactions..." oninput="filterSearch()">
+                </div>
+                <button class="btn-export" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i> Export
+                </button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Transaction</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="5"><div class="empty-state"><i class="fas fa-receipt"></i><p>Loading transactions...</p></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const API_URL = 'http://localhost:5000/api/transactions';
+let allTransactions = [];
+let currentTab = 'all';
+
+const catEmoji = { Salary:'💰', Groceries:'🛒', Food:'🍔', Shopping:'🛍️', Rent:'🏠', Travel:'✈️', Medical:'💊', Entertainment:'🎬', Investment:'📈', Bills:'📋' };
+
+async function fetchTransactions() {
+    try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Failed');
+        allTransactions = await res.json();
+        updateStats(allTransactions);
+        renderTable(allTransactions);
+    } catch(e) {
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="fas fa-wifi"></i><p>Backend se connection nahi ho pa raha!</p></div></td></tr>`;
+    }
+}
+
+function updateStats(data) {
+    let income = 0, expense = 0;
+    data.forEach(t => {
+        const amt = Number(t.amount) || 0;
+        if ((t.type || '').toLowerCase() === 'income') income += amt;
+        else expense += amt;
+    });
+    document.getElementById('totalIncome').textContent = `₹${income.toLocaleString('en-IN')}`;
+    document.getElementById('totalExpense').textContent = `₹${expense.toLocaleString('en-IN')}`;
+    document.getElementById('netSavings').textContent = `₹${(income - expense).toLocaleString('en-IN')}`;
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('tableBody');
+    if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="fas fa-receipt"></i><p>No transactions found</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = data.map(t => {
+        const type = (t.type || 'expense').toLowerCase();
+        const emoji = catEmoji[t.category] || '💳';
+        const date = new Date(t.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const sign = type === 'income' ? '+' : '-';
+        return `
+        <tr>
+            <td>
+                <div class="tx-desc">
+                    <div class="tx-emoji ${type}">${emoji}</div>
+                    <div>
+                        <div class="tx-name">${t.title || t.description || 'Transaction'}</div>
+                        <div class="tx-date">${date}</div>
+                    </div>
+                </div>
+            </td>
+            <td>${t.category}</td>
+            <td><span class="badge badge-${type}">${type}</span></td>
+            <td class="amount-${type}">${sign}₹${Number(t.amount).toLocaleString('en-IN')}</td>
+            <td><button class="btn-delete" onclick="deleteTransaction('${t._id}')" title="Delete"><i class="fas fa-trash-alt"></i></button></td>
+        </tr>`;
+    }).join('');
+}
+
+function switchTab(type, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = type;
+    applyFilters();
+}
+
+function filterSearch() { applyFilters(); }
+
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    let filtered = currentTab === 'all' ? allTransactions : allTransactions.filter(t => (t.type || '').toLowerCase() === currentTab);
+    if (search) filtered = filtered.filter(t => (t.title || t.description || '').toLowerCase().includes(search) || (t.category || '').toLowerCase().includes(search));
+    renderTable(filtered);
+}
+
+async function deleteTransaction(id) {
+    if (!confirm('Delete this transaction?')) return;
+    try {
+        await fetch(`http://localhost:5000/api/transactions/${id}`, { method: 'DELETE' });
+        allTransactions = allTransactions.filter(t => t._id !== id);
+        updateStats(allTransactions);
+        applyFilters();
+    } catch(e) { alert('Delete failed!'); }
+}
+
+function exportToExcel() {
+    if (!allTransactions.length) return alert('No data to export!');
+    const ws = XLSX.utils.json_to_sheet(allTransactions);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+    XLSX.writeFile(wb, `Finance_Report_${new Date().toLocaleDateString()}.xlsx`);
+}
+
+function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+document.addEventListener('DOMContentLoaded', fetchTransactions);
+</script>
+</body>
+</html>
