@@ -174,7 +174,7 @@ app.post('/api/auth/final', async (req, res) => {
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
-    (req, res) => res.redirect(`http://127.0.0.1:5500/finance-ai-app/frontend/index.html?email=${req.user.email}`)
+    (req, res) => res.redirect(`https://sunny-unicorn-558c9c.netlify.app/index.html?email=${req.user.email}`)
 );
 
 // AI Finance Chatbot Route - Groq
