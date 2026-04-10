@@ -19,7 +19,7 @@
             --muted: #64748b;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); display: flex; min-height: 100vh; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); display: flex; min-height: 100vh; visibility: hidden; }
 
         /* ── SIDEBAR ── */
         .sidebar {
@@ -566,7 +566,11 @@ let spendingChart = null;
 window.onload = function() {
     const params = new URLSearchParams(window.location.search);
     const email = params.get('email') || localStorage.getItem('userEmail');
-    if (email) {
+    if (!email) {
+        window.location.href = 'login.html';
+        return;
+    }
+    document.body.style.visibility = 'visible';
         localStorage.setItem('userEmail', email);
         // Extract first name: tarunpuniya287 → Tarun, poonampuniya49 → Poonam
         const localPart = email.split('@')[0];           // tarunpuniya287
@@ -591,10 +595,7 @@ window.onload = function() {
         const hour = new Date().getHours();
         const greet = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
         document.getElementById('welcomeText').textContent = `${greet}, ${displayName}! 👋`;
-    } else {
-        window.location.href = 'login.html';
-        return;
-    }
+
     const now = new Date();
     document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('dateText').textContent = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
