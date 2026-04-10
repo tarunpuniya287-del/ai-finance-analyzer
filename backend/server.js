@@ -7,7 +7,6 @@ const nodemailer = require('nodemailer');
 const session = require('express-session');
 const passport = require('passport');
 require('dotenv').config();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // 1. Model Import (Sirf ek baar)
 const User = require('./models/user'); 
@@ -15,6 +14,9 @@ const Transaction = require('./models/Transaction'); // Ensure models/Transactio
 
 const app = express();
 const otpStore = {};
+const ML_ENGINE_URL = process.env.ML_ENGINE_URL || 'http://localhost:5001';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 // Middlewares
 app.use(cors());
@@ -48,9 +50,30 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Gemini Setup
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AIzaSyDYeDrlawhepvQzVD90Ow4hbRH5CjaVf58");
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+function ensureGroqConfigured() {
+    if (!process.env.GROQ_API_KEY) {
+        const error = new Error('GROQ_API_KEY is not configured');
+        error.statusCode = 503;
+        throw error;
+    }
+}
+
+async function createGroqCompletion(messages, options = {}) {
+    ensureGroqConfigured();
+
+    const response = await axios.post(GROQ_API_URL, {
+        model: GROQ_MODEL,
+        messages,
+        ...options
+    }, {
+        headers: {
+            'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    return response.data.choices?.[0]?.message?.content || '';
+}
 
 // --- ROUTES ---
 
