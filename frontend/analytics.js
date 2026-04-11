@@ -5,7 +5,9 @@ async function loadAnalytics() {
         const BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:5000'
             : 'https://ai-finance-analyzer-abas.onrender.com';
-        const res = await fetch(`${BASE}/api/transactions`);
+        const email = localStorage.getItem('userEmail') || '';
+        const emailParam = email ? '?email=' + encodeURIComponent(email) : '';
+        const res = await fetch(`${BASE}/api/transactions${emailParam}`);
         const data = await res.json();
 
         const catData = {};

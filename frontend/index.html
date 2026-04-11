@@ -614,7 +614,8 @@ async function loadDashboard() {
 // ── STATS ──
 async function loadStats() {
     try {
-        const res = await fetch(`${API}/stats`);
+        const email = localStorage.getItem('userEmail') || '';
+        const res = await fetch(`${API}/stats${email ? '?email=' + encodeURIComponent(email) : ''}`);
         const s = await res.json();
         const income = s.income || 0, expense = s.expense || 0, savings = s.savings || 0;
 
@@ -727,7 +728,8 @@ function animateCount(id, target) {
 // ── SPENDING CHART ──
 async function loadSpendingChart() {
     try {
-        const res = await fetch(`${API}/transactions`);
+        const email = localStorage.getItem('userEmail') || '';
+        const res = await fetch(`${API}/transactions${email ? '?email=' + encodeURIComponent(email) : ''}`);
         const txs = await res.json();
         const expenses = txs.filter(t => t.type && t.type.toLowerCase() === 'expense');
 
@@ -759,7 +761,8 @@ async function loadSpendingChart() {
 // ── RECENT TRANSACTIONS ──
 async function loadRecentTransactions() {
     try {
-        const res = await fetch(`${API}/transactions`);
+        const email = localStorage.getItem('userEmail') || '';
+        const res = await fetch(`${API}/transactions${email ? '?email=' + encodeURIComponent(email) : ''}`);
         const txs = await res.json();
         const list = document.getElementById('recentTxList');
         const recent = txs.slice(0, 6);
@@ -791,9 +794,11 @@ async function loadAIInsight() {
     const el = document.getElementById('aiInsight');
     el.textContent = 'Analyzing your finances...';
     try {
-        const statsRes = await fetch(`${API}/stats`);
+        const email = localStorage.getItem('userEmail') || '';
+        const emailParam = email ? '?email=' + encodeURIComponent(email) : '';
+        const statsRes = await fetch(`${API}/stats${emailParam}`);
         const s = await statsRes.json();
-        const txRes = await fetch(`${API}/transactions`);
+        const txRes = await fetch(`${API}/transactions${emailParam}`);
         const txs = await txRes.json();
 
         const expenses = txs.filter(t => t.type && t.type.toLowerCase() === 'expense');
@@ -816,11 +821,12 @@ async function sendData(type) {
     const amount = document.getElementById('amount').value;
     const category = document.getElementById('category').value;
     if (!title || !amount) return alert('Please fill all fields!');
+    const email = localStorage.getItem('userEmail') || '';
 
     try {
         await fetch(`${API}/add-transaction`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, description: title, amount: Number(amount), category, type })
+            body: JSON.stringify({ title, description: title, amount: Number(amount), category, type, email })
         });
         document.getElementById('title').value = '';
         document.getElementById('amount').value = '';
@@ -831,9 +837,11 @@ async function sendData(type) {
 // ── SMART ANALYSIS ──
 async function loadSmartAnalysis() {
     try {
-        const statsRes = await fetch(`${API}/stats`);
+        const email = localStorage.getItem('userEmail') || '';
+        const emailParam = email ? '?email=' + encodeURIComponent(email) : '';
+        const statsRes = await fetch(`${API}/stats${emailParam}`);
         const s = await statsRes.json();
-        const txRes = await fetch(`${API}/transactions`);
+        const txRes = await fetch(`${API}/transactions${emailParam}`);
         const txs = await txRes.json();
 
         const catMap = {};

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const axios = require('axios');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const session = require('express-session');
 const passport = require('passport');
@@ -47,6 +48,15 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
+    }
+});
+
+// Verify transporter on startup
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("❌ Email transporter error:", error.message);
+    } else {
+        console.log("✅ Email server is ready to send messages");
     }
 });
 
@@ -115,10 +125,15 @@ app.post('/api/get-prediction', async (req, res) => {
 });
 
 // Transaction Routes
-// Dono routes ko ek hi naam do taaki frontend confuse na ho
 app.get('/api/transactions', async (req, res) => {
     try {
-        const txs = await Transaction.find().sort({ date: -1 });
+        const { email } = req.query;
+        const filter = {};
+        if (email) {
+            const user = await User.findOne({ email });
+            if (user) filter.userId = user._id;
+        }
+        const txs = await Transaction.find(filter).sort({ date: -1 });
         res.json(txs);
     } catch (err) { 
         res.status(500).json({ error: "Database se data nahi mila" }); 
@@ -127,7 +142,12 @@ app.get('/api/transactions', async (req, res) => {
 
 app.post('/api/add-transaction', async (req, res) => {
     try {
-        const tx = new Transaction(req.body);
+        const { email, ...txData } = req.body;
+        if (email) {
+            const user = await User.findOne({ email });
+            if (user) txData.userId = user._id;
+        }
+        const tx = new Transaction(txData);
         await tx.save();
         res.status(201).json({ message: "Saved" });
     } catch (err) { res.status(400).json(err); }
@@ -142,7 +162,14 @@ app.delete('/api/transactions/:id', async (req, res) => {
 
 app.get('/api/stats', async (req, res) => {
     try {
+        const { email } = req.query;
+        const matchFilter = {};
+        if (email) {
+            const user = await User.findOne({ email });
+            if (user) matchFilter.userId = user._id;
+        }
         const stats = await Transaction.aggregate([
+            { $match: matchFilter },
             { $group: { _id: "$type", total: { $sum: "$amount" } } }
         ]);
         let result = { income: 0, expense: 0 };
@@ -164,15 +191,21 @@ app.post('/api/check-email', async (req, res) => {
         } else {
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             otpStore[email] = otp;
-            await transporter.sendMail({
+            console.log(`📧 Sending OTP to ${email}...`);
+            const info = await transporter.sendMail({
                 from: `"Finance AI" <${process.env.EMAIL_USER}>`,
                 to: email,
-                subject: 'Your OTP',
-                text: `Aapka OTP: ${otp}`
+                subject: 'Your OTP - Finance AI',
+                text: `Your OTP is: ${otp}\n\nThis OTP is valid for 10 minutes.`,
+                html: `<h2>Finance AI - OTP Verification</h2><p>Your OTP is: <b style="font-size:24px">${otp}</b></p><p>This OTP is valid for 10 minutes.</p>`
             });
+            console.log(`✅ OTP email sent: ${info.messageId}`);
             res.json({ exists: false, message: "OTP Sent." });
         }
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) { 
+        console.error("❌ OTP Send Error:", err.message);
+        res.status(500).json({ error: err.message }); 
+    }
 });
 
 app.post('/api/auth/final', async (req, res) => {
@@ -197,7 +230,10 @@ app.post('/api/auth/final', async (req, res) => {
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
-    (req, res) => res.redirect(`https://sunny-unicorn-558c9c.netlify.app/index.html?email=${req.user.email}`)
+    (req, res) => {
+        const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5500';
+        res.redirect(`${frontendURL}/index.html?email=${req.user.email}`);
+    }
 );
 
 // AI Finance Chatbot Route - Groq
@@ -334,6 +370,108 @@ Respond with valid JSON only:
     } catch (err) {
         console.error("Smart Analysis Error:", err.message);
         res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Forgot Password Route
+app.post('/api/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email || !email.trim()) {
+            return res.status(400).json({ message: 'Email is required.' });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
+        }
+
+        if (user.googleId) {
+            return res.status(400).json({ message: 'This account uses Google Sign-In. Please sign in with Google.' });
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiry = new Date(Date.now() + 3600000);
+
+        const resetURL = `${process.env.FRONTEND_URL}/reset-password.html?token=${token}`;
+
+        try {
+            await transporter.sendMail({
+                from: `"Finance AI" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Reset your Finance AI password',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 8px;">
+                        <div style="text-align: center; margin-bottom: 24px;">
+                            <h1 style="color: #1a56db; font-size: 24px; margin: 0;">Finance AI</h1>
+                            <p style="color: #6b7280; margin: 4px 0 0;">Password Reset Request</p>
+                        </div>
+                        <div style="background: #ffffff; border-radius: 8px; padding: 24px; border: 1px solid #e5e7eb;">
+                            <p style="color: #111827; font-size: 16px; margin: 0 0 16px;">Hi there,</p>
+                            <p style="color: #374151; font-size: 15px; margin: 0 0 24px;">
+                                We received a request to reset your Finance AI password. Click the button below to set a new password. This link expires in <strong>1 hour</strong>.
+                            </p>
+                            <div style="text-align: center; margin: 24px 0;">
+                                <a href="${resetURL}" style="display: inline-block; background: #1a56db; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 6px; font-size: 15px; font-weight: 600;">
+                                    Reset Password
+                                </a>
+                            </div>
+                            <p style="color: #6b7280; font-size: 13px; margin: 24px 0 0;">
+                                If you didn't request a password reset, you can safely ignore this email. Your password will not be changed.
+                            </p>
+                            <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0; word-break: break-all;">
+                                Or copy this link: ${resetURL}
+                            </p>
+                        </div>
+                        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 16px 0 0;">
+                            &copy; ${new Date().getFullYear()} Finance AI. All rights reserved.
+                        </p>
+                    </div>
+                `
+            });
+        } catch (mailErr) {
+            console.error('❌ Reset email send error:', mailErr.message);
+            return res.status(500).json({ message: 'Failed to send reset email. Please try again.' });
+        }
+
+        user.resetToken = token;
+        user.resetTokenExpiry = expiry;
+        await user.save();
+
+        return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
+    } catch (err) {
+        console.error('❌ Forgot password error:', err.message);
+        res.status(500).json({ message: 'An unexpected error occurred. Please try again.' });
+    }
+});
+
+// Reset Password Route
+app.post('/api/reset-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ message: 'Token and new password are required.' });
+        }
+
+        const user = await User.findOne({ resetToken: token, resetTokenExpiry: { $gt: new Date() } });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Reset link is invalid or has expired.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        user.resetToken = null;
+        user.resetTokenExpiry = null;
+        await user.save();
+
+        return res.status(200).json({ message: 'Password reset successful.' });
+    } catch (err) {
+        console.error('❌ Reset password error:', err.message);
+        res.status(500).json({ message: 'An unexpected error occurred. Please try again.' });
     }
 });
 
