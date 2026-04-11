@@ -559,7 +559,9 @@
 </div>
 
 <script>
-const API = 'https://ai-finance-analyzer-abas.onrender.com/api';
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000/api'
+    : 'https://ai-finance-analyzer-abas.onrender.com/api';
 let spendingChart = null;
 
 // ── INIT ──
