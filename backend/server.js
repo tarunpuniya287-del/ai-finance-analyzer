@@ -7,9 +7,7 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const session = require('express-session');
 const passport = require('passport');
-if (process.env.NODE_ENV !== 'production') {
-    require('dotenv').config();
-}
+require('dotenv').config();
 
 // 1. Model Import (Sirf ek baar)
 const User = require('./models/user'); 
