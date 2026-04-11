@@ -8,14 +8,26 @@ app = Flask(__name__)
 CORS(app)
 
 # Load model and columns
-try:
-    model = pickle.load(open('finance_model.pkl', 'rb'))
-    model_columns = pickle.load(open('model_columns.pkl', 'rb'))
-    print("✅ Model loaded successfully!")
-except Exception as e:
-    print(f"❌ Model load error: {e}")
-    model = None
-    model_columns = []
+def load_or_train_model():
+    global model, model_columns
+    try:
+        model = pickle.load(open('finance_model.pkl', 'rb'))
+        model_columns = pickle.load(open('model_columns.pkl', 'rb'))
+        print("✅ Model loaded successfully!")
+    except Exception as e:
+        print(f"⚠️ Model load failed ({e}), retraining...")
+        try:
+            import subprocess
+            subprocess.run(['python', 'train.py'], check=True)
+            model = pickle.load(open('finance_model.pkl', 'rb'))
+            model_columns = pickle.load(open('model_columns.pkl', 'rb'))
+            print("✅ Model retrained and loaded!")
+        except Exception as e2:
+            print(f"❌ Retrain failed: {e2}")
+            model = None
+            model_columns = []
+
+load_or_train_model()
 
 def build_input(month, income, prev_expense, category):
     """Build input DataFrame matching training features"""
