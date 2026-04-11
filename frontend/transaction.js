@@ -1,6 +1,6 @@
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000/api/transactions'
-    : 'https://ai-finance-analyzer-abas.onrender.com/api/transactions'; 
+    : 'https://ai-finance-analyzer-5em3.onrender.com/api/transactions'; 
 let allTransactions = []; // Global store for filtering
 
 async function fetchTransactions() {
