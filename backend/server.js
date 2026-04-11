@@ -40,25 +40,21 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/financeDB')
     .then(() => console.log("✅ MongoDB Connected Successfully!"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// NODEMAILER SETUP
-const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
-
-// Verify transporter on startup
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("❌ Email transporter error:", error.message);
-    } else {
-        console.log("✅ Email server is ready to send messages");
-    }
-});
+// EMAIL SENDING via Brevo HTTP API
+async function sendEmail(to, subject, html) {
+    const response = await axios.post('https://api.brevo.com/v3/smtp/email', {
+        sender: { name: 'Finance AI', email: process.env.EMAIL_USER },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html
+    }, {
+        headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'Content-Type': 'application/json'
+        }
+    });
+    return response.data;
+}
 
 function ensureGroqConfigured() {
     if (!process.env.GROQ_API_KEY) {
@@ -192,14 +188,12 @@ app.post('/api/check-email', async (req, res) => {
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             otpStore[email] = otp;
             console.log(`📧 Sending OTP to ${email}...`);
-            const info = await transporter.sendMail({
-                from: `"Finance AI" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: 'Your OTP - Finance AI',
-                text: `Your OTP is: ${otp}\n\nThis OTP is valid for 10 minutes.`,
-                html: `<h2>Finance AI - OTP Verification</h2><p>Your OTP is: <b style="font-size:24px">${otp}</b></p><p>This OTP is valid for 10 minutes.</p>`
-            });
-            console.log(`✅ OTP email sent: ${info.messageId}`);
+            const info = await sendEmail(
+                email,
+                'Your OTP - Finance AI',
+                `<h2>Finance AI - OTP Verification</h2><p>Your OTP is: <b style="font-size:24px">${otp}</b></p><p>This OTP is valid for 10 minutes.</p>`
+            );
+            console.log(`✅ OTP email sent`);
             res.json({ exists: false, message: "OTP Sent." });
         }
     } catch (err) { 
@@ -398,11 +392,10 @@ app.post('/api/forgot-password', async (req, res) => {
         const resetURL = `${process.env.FRONTEND_URL}/reset-password.html?token=${token}`;
 
         try {
-            await transporter.sendMail({
-                from: `"Finance AI" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: 'Reset your Finance AI password',
-                html: `
+            await sendEmail(
+                email,
+                'Reset your Finance AI password',
+                `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 8px;">
                         <div style="text-align: center; margin-bottom: 24px;">
                             <h1 style="color: #1a56db; font-size: 24px; margin: 0;">Finance AI</h1>
@@ -419,18 +412,12 @@ app.post('/api/forgot-password', async (req, res) => {
                                 </a>
                             </div>
                             <p style="color: #6b7280; font-size: 13px; margin: 24px 0 0;">
-                                If you didn't request a password reset, you can safely ignore this email. Your password will not be changed.
-                            </p>
-                            <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0; word-break: break-all;">
-                                Or copy this link: ${resetURL}
+                                If you didn't request a password reset, you can safely ignore this email.
                             </p>
                         </div>
-                        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 16px 0 0;">
-                            &copy; ${new Date().getFullYear()} Finance AI. All rights reserved.
-                        </p>
                     </div>
                 `
-            });
+            );
         } catch (mailErr) {
             console.error('❌ Reset email send error:', mailErr.message);
             return res.status(500).json({ message: 'Failed to send reset email. Please try again.' });
