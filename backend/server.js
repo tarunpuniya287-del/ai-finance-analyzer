@@ -115,7 +115,7 @@ app.post('/api/ai-advice', async (req, res) => {
 app.post('/api/get-prediction', async (req, res) => {
     try {
         const { month, monthly_income, prev_month_expense, category } = req.body;
-        const response = await axios.post('http://localhost:5001/predict', {
+        const response = await axios.post(`${ML_ENGINE_URL}/predict`, {
             month, monthly_income, prev_month_expense, category
         });
         res.json(response.data);
@@ -295,7 +295,7 @@ app.post('/api/smart-analysis', async (req, res) => {
         let budgetStatus = 'Good';
 
         try {
-            const mlRes = await axios.post('http://localhost:5001/predict', {
+            const mlRes = await axios.post(`${ML_ENGINE_URL}/predict`, {
                 month,
                 monthly_income: income,
                 prev_month_expense: expense,
