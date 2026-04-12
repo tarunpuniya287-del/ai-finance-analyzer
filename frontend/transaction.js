@@ -133,11 +133,11 @@ function renderTable(data) {
 
         return `
             <tr>
-                <td>${formattedDate}</td>
-                <td>${t.description || t.title || 'N/A'}</td>
-                <td>${t.category}</td>
-                <td><span class="${badgeClass}">${type.toUpperCase()}</span></td>
-                <td style="font-weight: bold; color: ${amountColor}">
+                <td data-label="Date">${formattedDate}</td>
+                <td data-label="Description">${t.description || t.title || 'N/A'}</td>
+                <td data-label="Category">${t.category}</td>
+                <td data-label="Type"><span class="${badgeClass}">${type.toUpperCase()}</span></td>
+                <td data-label="Amount" style="font-weight: bold; color: ${amountColor}">
                     ${sign} ${formattedAmount}
                 </td>
             </tr>
