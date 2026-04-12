@@ -322,7 +322,7 @@ app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
         const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5500';
-        res.redirect(`${frontendURL}/index.html?email=${req.user.email}`);
+        res.redirect(`${frontendURL}/dashboard.html?email=${req.user.email}`);
     }
 );
 
