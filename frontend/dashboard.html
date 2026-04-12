@@ -212,6 +212,30 @@
     @media (max-width: 640px) {
       .stats-row { grid-template-columns: 1fr; }
       .quick-add { grid-template-columns: 1fr; }
+      
+      /* Mobile card view for transactions table */
+      .data-table thead { display: none; }
+      .data-table, .data-table tbody, .data-table tr { display: block; width: 100%; }
+      .data-table tr {
+        margin-bottom: 12px;
+        padding: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+      }
+      .data-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: none;
+      }
+      .data-table td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
     }
     
     @media (max-width: 480px) {
@@ -381,7 +405,7 @@
             <span id="mlStatusBadge" style="display:none;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;"></span>
           </div>
           <div class="ai-insight-msg" id="aiInsight">Analyzing your finances…</div>
-          <div id="mlMetaRow" style="display:none;margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;">
+          <div id="mlMetaRow" style="display:none;margin-top:8px;gap:16px;flex-wrap:wrap;align-items:center;">
             <span style="font-size:11px;color:var(--muted);">ML Budget Limit: <strong id="mlLimit" style="color:var(--text);"></strong></span>
             <span style="font-size:11px;color:var(--muted);">Remaining: <strong id="mlRemaining" style="color:var(--income);"></strong></span>
             <span style="font-size:11px;color:var(--muted);">Used: <strong id="mlUsed" style="color:var(--text);"></strong></span>
@@ -937,9 +961,9 @@
       const date  = APP.fmtDate(t.date, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
       return `<tr>
-        <td style="color:var(--muted);font-size:12px">${date}</td>
-        <td style="font-weight:700;color:${color}">${sign}${APP.fmtCurrency(t.amount)}</td>
-        <td>
+        <td data-label="Date" style="color:var(--muted);font-size:12px">${date}</td>
+        <td data-label="Amount" style="font-weight:700;color:${color}">${sign}${APP.fmtCurrency(t.amount)}</td>
+        <td data-label="Description">
           <div class="tx-entity">
             <div class="tx-entity-icon" style="background:${catColor}22">
               <i class="fas ${icon}" style="color:${catColor}"></i>
@@ -950,7 +974,7 @@
             </div>
           </div>
         </td>
-        <td><span class="badge badge-purple">${t.category}</span></td>
+        <td data-label="Category"><span class="badge badge-purple">${t.category}</span></td>
       </tr>`;
     }).join('');
   }

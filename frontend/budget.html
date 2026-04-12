@@ -97,13 +97,14 @@
     .strip-value { font-size: 22px; font-weight: 700; letter-spacing: -.03em; }
     .strip-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-    @media (max-width:700px) {
+    @media (max-width: 700px) {
       .add-budget-grid { grid-template-columns: 1fr; }
-      .stats-strip { grid-template-columns: 1fr; }
+      .add-budget-grid .btn { width: 100%; }
     }
-    @media (max-width:480px) {
-      .stats-strip { grid-template-columns: repeat(3,1fr); gap:8px; }
+    @media (max-width: 600px) {
+      .stats-strip { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
       .strip-value { font-size: 18px; }
+      .strip-card { padding: 12px 14px; }
     }
   </style>
 </head>

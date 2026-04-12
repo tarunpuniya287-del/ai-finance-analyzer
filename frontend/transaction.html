@@ -30,7 +30,7 @@
       display: flex; align-items: center; gap: 8px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius-pill); padding: 0 14px;
-      height: 36px; flex: 1; min-width: 200px; max-width: 300px;
+      height: 36px; flex: 1; min-width: 140px; max-width: 300px;
       transition: border-color .18s;
     }
 
@@ -42,6 +42,12 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .tx-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .tx-stat { padding: 14px; }
+      .tx-stat-value { font-size: 14px !important; letter-spacing: -.02em !important; }
     }
 
     .tx-stat {
