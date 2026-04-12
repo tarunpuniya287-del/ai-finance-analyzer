@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — AI Finance Pro</title>
+  <meta name="description" content="Manage your profile, preferences, and account settings.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="app.css">
+  <style>
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .settings-nav {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: sticky;
+      top: calc(var(--topbar-h) + 16px);
+    }
+
+    .settings-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      font-size: 13px; font-weight: 500;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: all .18s;
+      text-decoration: none;
+    }
+
+    .settings-nav-item:last-child { border-bottom: none; }
+    .settings-nav-item i { width: 16px; text-align: center; font-size: 13px; }
+    .settings-nav-item:hover { background: var(--bg); color: var(--text); }
+    .settings-nav-item.active {
+      background: var(--primary-light); color: var(--primary); font-weight: 600;
+    }
+
+    .settings-sections { display: flex; flex-direction: column; gap: 16px; }
+
+    .settings-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .settings-section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-section-title {
+      font-size: 15px; font-weight: 700; letter-spacing: -.02em;
+    }
+
+    .settings-section-sub {
+      font-size: 12px; color: var(--muted); margin-top: 2px;
+    }
+
+    .settings-body { padding: 20px; }
+
+    .settings-row {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-row-label { font-size: 13px; font-weight: 600; }
+    .settings-row-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Toggle switch */
+    .toggle {
+      position: relative; width: 44px; height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { display: none; }
+
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--border-2);
+      border-radius: var(--radius-pill);
+      cursor: pointer; transition: background .2s;
+    }
+
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+      cursor: pointer;
+    }
+
+    .toggle input:checked ~ .toggle-track { background: var(--primary); }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(20px); }
+
+    .profile-avatar-row {
+      display: flex; align-items: center; gap: 16px;
+      padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+    }
+
+    .profile-avatar-big {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple-500), var(--purple-400));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 800; color: #fff;
+    }
+
+    .danger-zone {
+      border-color: var(--expense-border) !important;
+    }
+
+    .danger-zone .settings-section-header {
+      background: var(--expense-bg);
+      border-bottom-color: var(--expense-border);
+    }
+
+    .danger-zone .settings-section-title { color: var(--expense); }
+
+    @media (max-width:768px) {
+      .settings-layout { grid-template-columns: 1fr; }
+      .settings-nav { position: static; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💰</div>
+      <div class="brand-text"><b>FinanceAI</b><small>Smart Money Manager</small></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <a href="index.html"       class="nav-item" data-page="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+      <a href="transaction.html" class="nav-item" data-page="transactions"><i class="fas fa-exchange-alt"></i><span>Transactions</span></a>
+      <a href="wallet.html"      class="nav-item" data-page="wallet"><i class="fas fa-wallet"></i><span>Wallet</span></a>
+      <a href="goals.html"       class="nav-item" data-page="goals"><i class="fas fa-bullseye"></i><span>Goals</span></a>
+      <a href="budget.html"      class="nav-item" data-page="budget"><i class="fas fa-chart-bar"></i><span>Budget</span></a>
+      <a href="analytics.html"   class="nav-item" data-page="analytics"><i class="fas fa-chart-line"></i><span>Analytics</span></a>
+      <a href="settings.html"    class="nav-item active" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <a href="#" class="nav-item"><i class="fas fa-question-circle"></i><span>Help</span></a>
+      <button class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Log out</span></button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-greeting">
+        <h1 id="topbarGreeting">Settings</h1>
+        <p id="topbarSub"></p>
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-info">
+            <span id="userNameChip">User</span>
+            <small id="userEmailChip"></small>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div>
+        <div class="page-heading">Settings</div>
+        <div class="page-subtitle">Manage your account, preferences, and notifications.</div>
+      </div>
+
+      <div class="settings-layout">
+
+        <!-- Settings Nav -->
+        <div class="settings-nav">
+          <a href="#profile"       class="settings-nav-item active"><i class="fas fa-user"></i> Profile</a>
+          <a href="#preferences"   class="settings-nav-item"><i class="fas fa-sliders-h"></i> Preferences</a>
+          <a href="#notifications" class="settings-nav-item"><i class="fas fa-bell"></i> Notifications</a>
+          <a href="#security"      class="settings-nav-item"><i class="fas fa-shield-alt"></i> Security</a>
+          <a href="#danger"        class="settings-nav-item" style="color:var(--expense);">
+            <i class="fas fa-exclamation-triangle"></i> Danger Zone
+          </a>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="settings-sections">
+
+          <!-- Profile -->
+          <div class="settings-section" id="profile">
+            <div class="settings-section-header">
+              <div class="settings-section-title">Profile</div>
+              <div class="settings-section-sub">Your personal information</div>
+            </div>
+            <div class="settings-body">
+              <div class="profile-avatar-row">
+                <div class="profile-avatar-big" id="bigAvatar">U</div>
+                <div>
+                  <div style="font-size:16px;font-weight:700;" id="profileName">User</div>
+                  <div style="font-size:13px;color:var(--muted);" id="profileEmail">—</div>
+                  <div style="margin-top:8px;">
+                    <span class="badge badge-purple"><i class="fas fa-crown"></i> Finance Pro</span>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Email Address</div>
+                  <div class="settings-row-sub" id="emailDisplay">—</div>
+                </div>
+                <span class="badge badge-green"><i class="fas fa-check"></i> Verified</span>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Account Type</div>
+                  <div class="settings-row-sub">Personal Finance Account</div>
+                </div>
+                <span class="badge badge-purple">Free Plan</span>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Member Since</div>
+                  <div class="settings-row-sub" id="memberSince">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferences -->
+          <div class="settings-section" id="preferences">
+            <div class="settings-section-header">
+              <div class="settings-section-title">Preferences</div>
+              <div class="settings-section-sub">Customize your experience</div>
+            </div>
+            <div class="settings-body">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Currency</div>
+                  <div class="settings-row-sub">Primary currency for display</div>
+                </div>
+                <select id="currencySelect" class="form-input" style="width:120px;height:36px;font-size:12px;">
+                  <option value="INR">₹ INR</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Date Format</div>
+                  <div class="settings-row-sub">How dates are displayed</div>
+                </div>
+                <select id="dateFormatSelect" class="form-input" style="width:140px;height:36px;font-size:12px;">
+                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">AI Insights Language</div>
+                  <div class="settings-row-sub">Language for AI advice</div>
+                </div>
+                <select id="languageSelect" class="form-input" style="width:120px;height:36px;font-size:12px;">
+                  <option value="en">English</option>
+                  <option value="hi">Hindi</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="settings-section" id="notifications">
+            <div class="settings-section-header">
+              <div class="settings-section-title">Notifications</div>
+              <div class="settings-section-sub">Control how you get notified</div>
+            </div>
+            <div class="settings-body">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Budget Alerts</div>
+                  <div class="settings-row-sub">Notify when 80% of any budget is used</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" checked id="tog-budget">
+                  <div class="toggle-track"></div>
+                  <div class="toggle-thumb"></div>
+                </label>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Goal Milestones</div>
+                  <div class="settings-row-sub">Celebrate when you hit 25%, 50%, 75%</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" checked id="tog-goal">
+                  <div class="toggle-track"></div>
+                  <div class="toggle-thumb"></div>
+                </label>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Weekly Summary</div>
+                  <div class="settings-row-sub">Get weekly finance digest via email</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="tog-weekly">
+                  <div class="toggle-track"></div>
+                  <div class="toggle-thumb"></div>
+                </label>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">AI Tips</div>
+                  <div class="settings-row-sub">Smart tips based on your spending patterns</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" checked id="tog-ai">
+                  <div class="toggle-track"></div>
+                  <div class="toggle-thumb"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <div class="settings-section" id="security">
+            <div class="settings-section-header">
+              <div class="settings-section-title">Security</div>
+              <div class="settings-section-sub">Keep your account safe</div>
+            </div>
+            <div class="settings-body">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Change Password</div>
+                  <div class="settings-row-sub">Update your login password</div>
+                </div>
+                <a href="reset-password.html" class="btn btn-outline btn-sm">
+                  <i class="fas fa-key"></i> Change
+                </a>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Active Sessions</div>
+                  <div class="settings-row-sub">This device — Chrome</div>
+                </div>
+                <span class="badge badge-green"><i class="fas fa-circle"></i> Active</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="settings-section danger-zone" id="danger">
+            <div class="settings-section-header">
+              <div class="settings-section-title">Danger Zone</div>
+              <div class="settings-section-sub">Irreversible actions — proceed with caution</div>
+            </div>
+            <div class="settings-body">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Clear All Transactions</div>
+                  <div class="settings-row-sub">Permanently delete all your transaction history</div>
+                </div>
+                <button class="btn btn-outline btn-sm" style="border-color:var(--expense);color:var(--expense);"
+                        onclick="if(confirm('Delete ALL transactions? This cannot be undone.')) APP.toast('Feature coming soon!','info')">
+                  <i class="fas fa-trash"></i> Clear
+                </button>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Log Out</div>
+                  <div class="settings-row-sub">Sign out from this device</div>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="logout()">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /settings-sections -->
+      </div><!-- /settings-layout -->
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+<script src="app.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const email = APP.initTopbar();
+    if (!email) return;
+    document.body.classList.add('ready');
+
+    const name = APP.getDisplayName(email);
+    document.getElementById('bigAvatar').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('profileName').textContent = name;
+    document.getElementById('profileEmail').textContent = email;
+    document.getElementById('emailDisplay').textContent = email;
+    document.getElementById('memberSince').textContent =
+      new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+    // Settings nav active
+    document.querySelectorAll('.settings-nav-item').forEach(link => {
+      link.addEventListener('click', e => {
+        document.querySelectorAll('.settings-nav-item').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+
+    // ── Load user settings ──────────────────────────────────────
+    const settings = APP.getSettings();
+    
+    // Set preferences
+    document.getElementById('currencySelect').value = settings.currency;
+    document.getElementById('dateFormatSelect').value = settings.dateFormat;
+    document.getElementById('languageSelect').value = settings.language;
+    
+    // Set notifications
+    document.getElementById('tog-budget').checked = settings.notifications.budgetAlerts;
+    document.getElementById('tog-goal').checked = settings.notifications.goalMilestones;
+    document.getElementById('tog-weekly').checked = settings.notifications.weeklySummary;
+    document.getElementById('tog-ai').checked = settings.notifications.aiTips;
+
+    // ── Save settings on change ─────────────────────────────────
+    document.getElementById('currencySelect').addEventListener('change', e => {
+      APP.updateSetting('currency', e.target.value);
+      APP.toast('Currency updated successfully', 'success');
+    });
+
+    document.getElementById('dateFormatSelect').addEventListener('change', e => {
+      APP.updateSetting('dateFormat', e.target.value);
+      APP.toast('Date format updated successfully', 'success');
+    });
+
+    document.getElementById('languageSelect').addEventListener('change', e => {
+      APP.updateSetting('language', e.target.value);
+      APP.toast('Language updated successfully', 'success');
+    });
+
+    // Notification toggles
+    document.getElementById('tog-budget').addEventListener('change', e => {
+      APP.updateSetting('notifications.budgetAlerts', e.target.checked);
+      APP.toast(`Budget alerts ${e.target.checked ? 'enabled' : 'disabled'}`, 'success');
+    });
+
+    document.getElementById('tog-goal').addEventListener('change', e => {
+      APP.updateSetting('notifications.goalMilestones', e.target.checked);
+      APP.toast(`Goal milestones ${e.target.checked ? 'enabled' : 'disabled'}`, 'success');
+    });
+
+    document.getElementById('tog-weekly').addEventListener('change', e => {
+      APP.updateSetting('notifications.weeklySummary', e.target.checked);
+      APP.toast(`Weekly summary ${e.target.checked ? 'enabled' : 'disabled'}`, 'success');
+    });
+
+    document.getElementById('tog-ai').addEventListener('change', e => {
+      APP.updateSetting('notifications.aiTips', e.target.checked);
+      APP.toast(`AI tips ${e.target.checked ? 'enabled' : 'disabled'}`, 'success');
+    });
+  });
+</script>
+</body>
+</html>

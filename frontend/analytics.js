@@ -11,22 +11,19 @@ async function loadAnalytics() {
         const data = await res.json();
 
         const catData = {};
-        let totalInc = 0, totalExp = 0;
+        let totalExp = 0;
 
         data.forEach(t => {
             const amt = Number(t.amount) || 0;
             if ((t.type || '').toLowerCase() === 'expense') {
                 catData[t.category] = (catData[t.category] || 0) + amt;
                 totalExp += amt;
-            } else {
-                totalInc += amt;
             }
         });
 
         // Summary cards
-        document.getElementById('sumIncome').textContent = `₹${totalInc.toLocaleString('en-IN')}`;
-        document.getElementById('sumExpense').textContent = `₹${totalExp.toLocaleString('en-IN')}`;
-        document.getElementById('sumSavings').textContent = `₹${(totalInc - totalExp).toLocaleString('en-IN')}`;
+        document.getElementById('sumExpense').textContent = APP.formatCurrencyWithSettings(totalExp);
+        document.getElementById('sumSavings').textContent = APP.formatCurrencyWithSettings(0 - totalExp); // Negative since no income tracking
         document.getElementById('sumCount').textContent = data.length;
 
         // Doughnut chart
@@ -44,14 +41,14 @@ async function loadAnalytics() {
             });
         }
 
-        // Bar chart
+        // Bar chart - Only Expenses
         new Chart(document.getElementById('trendChart'), {
             type: 'bar',
             data: {
-                labels: ['Total Income', 'Total Expenses'],
+                labels: ['Total Expenses'],
                 datasets: [{
-                    data: [totalInc, totalExp],
-                    backgroundColor: ['rgba(16,185,129,0.85)', 'rgba(244,63,94,0.85)'],
+                    data: [totalExp],
+                    backgroundColor: ['rgba(244,63,94,0.85)'],
                     borderRadius: 14, barThickness: 70,
                     borderSkipped: false
                 }]
@@ -80,7 +77,7 @@ async function loadAnalytics() {
                 <div class="cat-bar-wrap">
                     <div class="cat-bar" style="width:${pct}%;background:${COLORS[i % COLORS.length]}"></div>
                 </div>
-                <div class="cat-amount">₹${amt.toLocaleString('en-IN')}</div>
+                <div class="cat-amount">${APP.formatCurrencyWithSettings(amt)}</div>
             </div>`;
         }).join('');
 

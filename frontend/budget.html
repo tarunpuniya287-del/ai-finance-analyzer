@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget — AI Finance Pro</title>
+  <meta name="description" content="Set monthly budgets and track your spending by category.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="app.css">
+  <style>
+    .budget-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .budget-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      transition: box-shadow .22s, transform .22s;
+    }
+
+    .budget-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+    .budget-card-top {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 14px;
+    }
+
+    .budget-cat-info { display: flex; align-items: center; gap: 10px; }
+
+    .budget-cat-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .budget-cat-name {
+      font-size: 14px; font-weight: 700; letter-spacing: -.01em;
+    }
+
+    .budget-pct-badge {
+      font-size: 12px; font-weight: 700; padding: 3px 8px;
+      border-radius: var(--radius-pill);
+    }
+
+    .budget-amounts {
+      display: flex; justify-content: space-between;
+      margin: 10px 0 6px;
+    }
+
+    .budget-spent { font-size: 18px; font-weight: 700; letter-spacing: -.03em; }
+    .budget-limit { font-size: 12px; color: var(--muted); font-weight: 500; align-self: flex-end; }
+
+    .budget-remaining { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .budget-actions { display: flex; gap: 6px; margin-top: 12px; }
+    .budget-actions .form-input { height: 32px; font-size: 12px; }
+    .budget-actions .btn { height: 32px; padding: 0 12px; font-size: 12px; flex-shrink: 0; }
+
+    .add-budget-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .add-budget-title {
+      font-size: 15px; font-weight: 700; margin-bottom: 14px;
+    }
+
+    .add-budget-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr auto;
+      gap: 10px; align-items: end;
+    }
+
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .strip-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+    }
+
+    .strip-label { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+    .strip-value { font-size: 22px; font-weight: 700; letter-spacing: -.03em; }
+    .strip-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    @media (max-width:700px) {
+      .add-budget-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💰</div>
+      <div class="brand-text"><b>FinanceAI</b><small>Smart Money Manager</small></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <a href="index.html"       class="nav-item" data-page="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+      <a href="transaction.html" class="nav-item" data-page="transactions"><i class="fas fa-exchange-alt"></i><span>Transactions</span></a>
+      <a href="wallet.html"      class="nav-item" data-page="wallet"><i class="fas fa-wallet"></i><span>Wallet</span></a>
+      <a href="goals.html"       class="nav-item" data-page="goals"><i class="fas fa-bullseye"></i><span>Goals</span></a>
+      <a href="budget.html"      class="nav-item active" data-page="budget"><i class="fas fa-chart-bar"></i><span>Budget</span></a>
+      <a href="analytics.html"   class="nav-item" data-page="analytics"><i class="fas fa-chart-line"></i><span>Analytics</span></a>
+      <a href="settings.html"    class="nav-item" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <a href="#" class="nav-item"><i class="fas fa-question-circle"></i><span>Help</span></a>
+      <button class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Log out</span></button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-greeting">
+        <h1 id="topbarGreeting">Budget Planner</h1>
+        <p id="topbarSub"></p>
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-info">
+            <span id="userNameChip">User</span>
+            <small id="userEmailChip"></small>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div>
+        <div class="page-heading">Monthly Budget</div>
+        <div class="page-subtitle" id="budgetMonthLabel">Setting budgets for this month helps you control overspending.</div>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="stats-strip">
+        <div class="strip-card">
+          <div class="strip-label">Total Budget</div>
+          <div class="strip-value" id="statTotalBudget">₹0</div>
+          <div class="strip-sub">across all categories</div>
+        </div>
+        <div class="strip-card">
+          <div class="strip-label">Total Spent</div>
+          <div class="strip-value" id="statTotalSpent" style="color:var(--expense)">₹0</div>
+          <div class="strip-sub">this month</div>
+        </div>
+        <div class="strip-card">
+          <div class="strip-label">Remaining</div>
+          <div class="strip-value" id="statRemaining" style="color:var(--income)">₹0</div>
+          <div class="strip-sub">budget left</div>
+        </div>
+      </div>
+
+      <!-- Add budget section -->
+      <div class="add-budget-section">
+        <div class="add-budget-title">Set / Update Category Budget</div>
+        <div class="add-budget-grid">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="budgetCategory">Category</label>
+            <select class="form-input" id="budgetCategory">
+              <option value="Salary">Salary</option>
+              <option value="Groceries">Groceries</option>
+              <option value="Food">Food &amp; Drinks</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Rent">Rent / Bills</option>
+              <option value="Travel">Travel</option>
+              <option value="Medical">Medical</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Investment">Investment</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="budgetLimit">Monthly Limit ({APP.getCurrencySymbol()})</label>
+            <div class="form-input-icon">
+              <i class="fas fa-rupee-sign"></i>
+              <input type="number" class="form-input" id="budgetLimit" placeholder="5000">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveBudget()" id="btn-save-budget"
+                  style="height:40px;margin-top:auto;">
+            <i class="fas fa-check"></i> Set Budget
+          </button>
+        </div>
+      </div>
+
+      <!-- Budget cards -->
+      <div class="budget-grid" id="budgetGrid">
+        <div class="empty-state card" style="grid-column:1/-1;padding:40px;text-align:center;">
+          <div style="font-size:36px;margin-bottom:12px;">📊</div>
+          <p style="color:var(--muted);">No budgets set yet. Add category budgets above to track your spending!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+<script src="app.js"></script>
+<script>
+  let email = '';
+  let budgets = [];
+  let spending = {};
+
+  const CATEGORY_COLORS = {
+    Salary:'#7c3aed',Groceries:'#06b6d4',Food:'#f59e0b',
+    Shopping:'#ec4899',Rent:'#6366f1',Travel:'#10b981',
+    Medical:'#ef4444',Entertainment:'#8b5cf6',Investment:'#14b8a6'
+  };
+
+  const CATEGORY_ICONS = {
+    Salary:'💼',Groceries:'🛒',Food:'🍔',Shopping:'🛍️',
+    Rent:'🏠',Travel:'✈️',Medical:'💊',Entertainment:'🎬',Investment:'📈'
+  };
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    email = APP.initTopbar();
+    if (!email) return;
+    document.body.classList.add('ready');
+
+    const now  = new Date();
+    document.getElementById('budgetMonthLabel').textContent =
+      `Budget for ${now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}`;
+
+    await loadData();
+  });
+
+  async function loadData() {
+    try {
+      const [bData, sData] = await Promise.all([
+        APP.apiGet('/budget', email),
+        APP.apiGet('/category-spending', email)
+      ]);
+
+      budgets = bData;
+      spending = {};
+      sData.forEach(s => { spending[s.category] = s.spent; });
+
+      renderBudgets();
+      updateStats();
+    } catch(e) { console.error(e); }
+  }
+
+  function updateStats() {
+    const totalBudget = budgets.reduce((s, b) => s + b.limitAmount, 0);
+    const totalSpent  = budgets.reduce((s, b) => s + (spending[b.category] || 0), 0);
+    const remaining   = totalBudget - totalSpent;
+
+    document.getElementById('statTotalBudget').textContent = APP.formatCurrencyWithSettings(totalBudget);
+    document.getElementById('statTotalSpent').textContent  = APP.formatCurrencyWithSettings(totalSpent);
+    document.getElementById('statRemaining').textContent   = APP.formatCurrencyWithSettings(Math.max(0, remaining));
+  }
+
+  function renderBudgets() {
+    const grid = document.getElementById('budgetGrid');
+    if (!budgets.length) {
+      grid.innerHTML = `<div class="card" style="grid-column:1/-1;padding:40px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:12px;">📊</div>
+        <p style="color:var(--muted);">No budgets set yet. Add a category budget above!</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = budgets.map(b => {
+      const spent    = spending[b.category] || 0;
+      const pct      = b.limitAmount > 0 ? Math.min(100, Math.round((spent / b.limitAmount) * 100)) : 0;
+      const remaining= Math.max(0, b.limitAmount - spent);
+      const over     = spent > b.limitAmount;
+      const color    = CATEGORY_COLORS[b.category] || '#7c3aed';
+      const fillCls  = over ? 'danger' : pct >= 80 ? 'warning' : '';
+      const badgeCls = over ? 'badge-red' : pct >= 80 ? 'badge-yellow' : 'badge-green';
+      const badgeTxt = over ? '⚠ Over' : `${pct}%`;
+      const icon     = CATEGORY_ICONS[b.category] || '💰';
+
+      return `
+      <div class="budget-card">
+        <div class="budget-card-top">
+          <div class="budget-cat-info">
+            <div class="budget-cat-icon" style="background:${color}22;color:${color};">${icon}</div>
+            <div class="budget-cat-name">${b.category}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="badge ${badgeCls} budget-pct-badge">${badgeTxt}</span>
+            <button class="btn btn-icon btn-ghost btn-sm" onclick="deleteBudget('${b._id}')" title="Remove">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="budget-amounts">
+          <div class="budget-spent" style="color:${over ? 'var(--expense)' : color}">
+            ${APP.formatCurrencyWithSettings(spent)}
+          </div>
+          <div class="budget-limit">of ${APP.formatCurrencyWithSettings(b.limitAmount)}</div>
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-fill ${fillCls}" style="width:${pct}%;${!fillCls ? 'background:'+color+';' : ''}"></div>
+        </div>
+
+        <div class="budget-remaining">
+          ${over
+            ? `<span style="color:var(--expense);font-weight:600;">Over by ${APP.formatCurrencyWithSettings(spent - b.limitAmount)}</span>`
+            : `${APP.formatCurrencyWithSettings(remaining)} remaining`}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function saveBudget() {
+    const category   = document.getElementById('budgetCategory').value;
+    const limitAmount= Number(document.getElementById('budgetLimit').value);
+    if (!limitAmount) return APP.toast('Please enter a limit amount!', 'error');
+
+    try {
+      document.getElementById('btn-save-budget').disabled = true;
+      await APP.apiPost('/budget', { email, category, limitAmount });
+      APP.toast(`Budget set for ${category}!`, 'success');
+      document.getElementById('budgetLimit').value = '';
+      await loadData();
+    } catch(e) { APP.toast('Failed to save!', 'error'); }
+    finally { document.getElementById('btn-save-budget').disabled = false; }
+  }
+
+  async function deleteBudget(id) {
+    if (!confirm('Remove this budget?')) return;
+    try {
+      await APP.apiDelete(`/budget/${id}`);
+      APP.toast('Budget removed', 'info');
+      await loadData();
+    } catch(e) { APP.toast('Failed to delete!', 'error'); }
+  }
+</script>
+</body>
+</html>

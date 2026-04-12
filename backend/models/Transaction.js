@@ -13,7 +13,13 @@ const TransactionSchema = new mongoose.Schema({
     },
     category: { 
         type: String, 
-        enum: ['Salary', 'Groceries', 'Food', 'Shopping', 'Rent', 'Bills', 'Investment', 'Entertainment', 'Travel', 'Medical'],
+        enum: [
+            // Income categories
+            'Salary', 'Freelance', 'Business', 'Dividend', 'Gift', 'Cashback', 'Rental', 'Other',
+            // Expense categories
+            'Groceries', 'Food', 'Shopping', 'Rent', 'Bills', 'Investment', 'Entertainment', 
+            'Travel', 'Medical', 'Utilities', 'Education'
+        ],
         required: true 
     },
     date: { type: Date, default: Date.now },

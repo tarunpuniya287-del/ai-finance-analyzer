@@ -1,0 +1,754 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wallet — AI Finance Pro</title>
+  <meta name="description" content="Link your real credit cards, debit cards, and UPI accounts powered by Razorpay.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="app.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    /* ── Layout ── */
+    .wallet-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 8px;
+    }
+
+    /* ── Total Banner ── */
+    .total-balance-banner {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+      border-radius: var(--radius-xl);
+      padding: 28px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      color: #fff; overflow: hidden; position: relative;
+      border: 1px solid rgba(124,58,237,.3);
+      margin-bottom: 8px;
+    }
+    .total-balance-banner::before {
+      content: ''; position: absolute; top: -60px; right: -60px;
+      width: 220px; height: 220px; border-radius: 50%;
+      background: rgba(124,58,237,.25);
+    }
+    .total-balance-banner::after {
+      content: ''; position: absolute; bottom: -40px; right: 120px;
+      width: 140px; height: 140px; border-radius: 50%;
+      background: rgba(167,139,250,.12);
+    }
+    .banner-label { font-size: 11px; opacity: .55; margin-bottom: 8px; letter-spacing: .1em; font-weight: 700; text-transform: uppercase; }
+    .banner-amount { font-size: 42px; font-weight: 800; letter-spacing: -.04em; font-family: 'Space Grotesk', sans-serif; }
+    .banner-sub  { font-size: 12px; opacity: .45; margin-top: 6px; }
+    .rzp-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 40px; padding: 8px 14px; backdrop-filter: blur(6px);
+    }
+    .rzp-badge img { width: 70px; opacity: .85; }
+    .rzp-badge span { font-size: 10px; opacity: .5; }
+
+    /* ── Section Tabs ── */
+    .wallet-tabs {
+      display: flex; gap: 4px;
+      background: var(--surface); border-radius: var(--radius-lg);
+      padding: 4px; border: 1px solid var(--border);
+    }
+    .wallet-tab {
+      flex: 1; padding: 9px 16px; border: none; background: transparent;
+      color: var(--muted); font-size: 13px; font-weight: 600; border-radius: var(--radius-md);
+      cursor: pointer; transition: all .18s; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .wallet-tab.active { background: var(--primary); color: #fff; }
+    .wallet-tab:hover:not(.active) { background: var(--border); color: var(--text); }
+
+    /* ── Grid ── */
+    .wallet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 18px;
+    }
+
+    /* ── Payment Card (Credit / Debit) ── */
+    .payment-card {
+      border-radius: 18px;
+      padding: 24px;
+      color: #fff;
+      position: relative; overflow: hidden;
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+      min-height: 180px;
+      cursor: default;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .payment-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 24px 48px rgba(0,0,0,.35); }
+
+    .payment-card .card-shine {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 50%, rgba(255,255,255,.05) 100%);
+      pointer-events: none;
+    }
+    .payment-card .card-chip {
+      width: 36px; height: 28px;
+      background: linear-gradient(135deg, #d4af6a 0%, #f5d78e 40%, #c8922a 100%);
+      border-radius: 5px; margin-bottom: 20px;
+    }
+    .payment-card .card-chip::after {
+      content: '';
+      display: block; width: 100%; height: 50%; border-top: 1px solid rgba(0,0,0,.2); border-bottom: 1px solid rgba(0,0,0,.2); margin-top: 25%;
+    }
+    .payment-card .card-number {
+      font-size: 17px; letter-spacing: .18em; font-weight: 500; margin-bottom: 18px; opacity: .95;
+    }
+    .payment-card .card-meta {
+      display: flex; justify-content: space-between; align-items: flex-end;
+    }
+    .payment-card .card-holder { font-size: 13px; opacity: .75; text-transform: uppercase; letter-spacing: .06em; }
+    .payment-card .card-name { font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+    .payment-card .card-expiry-label { font-size: 9px; opacity: .5; text-transform: uppercase; letter-spacing: .1em; }
+    .payment-card .card-expiry-val { font-size: 14px; font-weight: 600; }
+    .payment-card .card-network { position: absolute; top: 20px; right: 20px; font-size: 28px; opacity: .85; }
+    .payment-card .card-type-badge {
+      position: absolute; top: 20px; left: 24px;
+      font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .6;
+    }
+    .payment-card .card-actions {
+      position: absolute; bottom: 16px; right: 16px;
+      display: flex; gap: 6px; opacity: 0; transition: opacity .18s;
+    }
+    .payment-card:hover .card-actions { opacity: 1; }
+    .card-action-btn {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(255,255,255,.2); border: none;
+      color: #fff; cursor: pointer; font-size: 10px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .18s;
+    }
+    .card-action-btn:hover { background: rgba(255,255,255,.35); }
+
+    /* ── Card gradients by network ── */
+    .card-visa    { background: linear-gradient(135deg, #1a1f71 0%, #2563eb 100%); }
+    .card-mastercard { background: linear-gradient(135deg, #1c1c1e 0%, #eb5757 60%, #f5a623 100%); }
+    .card-rupay   { background: linear-gradient(135deg, #064e3b 0%, #059669 100%); }
+    .card-amex    { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }
+    .card-default { background: linear-gradient(135deg, #312e81 0%, #7c3aed 100%); }
+
+    /* ── UPI Card ── */
+    .upi-card {
+      border-radius: var(--radius-xl); padding: 22px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      position: relative; overflow: hidden;
+      transition: transform .22s, box-shadow .22s;
+      min-height: 130px;
+    }
+    .upi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .upi-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .upi-icon-wrap {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      font-size: 20px; color: #fff;
+    }
+    .upi-app-name { font-size: 15px; font-weight: 700; color: var(--text); }
+    .upi-id-text { font-size: 12px; color: var(--primary); font-weight: 600; letter-spacing: .01em; }
+    .upi-handle-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--primary-light); color: var(--primary);
+      padding: 4px 10px; border-radius: var(--radius-pill);
+      font-size: 11px; font-weight: 700;
+    }
+    .upi-balance-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .upi-balance { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.03em; }
+    .upi-verified-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(16,185,129,.1); color: #10b981;
+      padding: 4px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700;
+    }
+
+    /* ── Bank Card ── */
+    .bank-card {
+      border-radius: var(--radius-xl); padding: 22px;
+      color: #fff; position: relative; overflow: hidden;
+      min-height: 150px;
+      transition: transform .22s, box-shadow .22s;
+    }
+    .bank-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .bank-card::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: rgba(255,255,255,.12);
+    }
+    .bank-card-type {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.2);
+      padding: 4px 10px; border-radius: var(--radius-pill);
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px;
+    }
+    .bank-card-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .bank-card-num { font-size: 11px; opacity: .65; margin-bottom: 16px; }
+    .bank-card-balance { font-size: 28px; font-weight: 800; letter-spacing: -.04em; }
+    .bank-card-actions { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; }
+
+    /* ── Cash Card ── */
+    .cash-card { background: linear-gradient(135deg, #064e3b 0%, #059669 80%); }
+
+    /* ── Add Card btn ── */
+    .add-wallet-card {
+      border-radius: var(--radius-xl); padding: 22px;
+      background: var(--surface);
+      border: 2px dashed var(--border-2);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; min-height: 150px;
+      cursor: pointer; transition: border-color .18s, background .18s;
+    }
+    .add-wallet-card:hover { border-color: var(--primary); background: var(--primary-light); }
+    .add-wallet-card i { font-size: 26px; color: var(--primary); }
+    .add-wallet-card p { font-size: 13px; color: var(--primary); font-weight: 600; margin: 0; }
+
+    /* ── Modal ── */
+    .type-selector {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 4px;
+    }
+    .type-btn {
+      border: 2px solid var(--border); border-radius: var(--radius-md);
+      padding: 10px 6px; background: var(--surface);
+      cursor: pointer; text-align: center; transition: all .18s;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .type-btn i { font-size: 18px; color: var(--muted); transition: color .18s; }
+    .type-btn span { font-size: 11px; font-weight: 600; color: var(--muted); transition: color .18s; }
+    .type-btn:hover, .type-btn.active {
+      border-color: var(--primary); background: var(--primary-light);
+    }
+    .type-btn.active i, .type-btn.active span { color: var(--primary); }
+
+    /* Live card preview */
+    .card-preview-wrap { perspective: 1000px; margin-bottom: 8px; }
+    .card-preview {
+      width: 100%; max-width: 340px; height: 190px; margin: 0 auto;
+      border-radius: 18px; padding: 22px;
+      background: linear-gradient(135deg, #1a1f71 0%, #2563eb 100%);
+      color: #fff; position: relative; overflow: hidden;
+      font-family: 'Space Grotesk', sans-serif;
+      transition: background .3s;
+      box-shadow: 0 16px 40px rgba(0,0,0,.4);
+    }
+    .card-preview .shine { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 60%); }
+    .card-preview .chip {
+      width: 32px; height: 24px;
+      background: linear-gradient(135deg, #d4af6a, #f5d78e 50%, #c8922a);
+      border-radius: 4px; margin-bottom: 16px;
+    }
+    .card-preview .p-number { font-size: 18px; letter-spacing: .2em; margin-bottom: 16px; opacity: .95; }
+    .card-preview .p-meta { display: flex; justify-content: space-between; }
+    .card-preview .p-label { font-size: 9px; opacity: .5; text-transform: uppercase; letter-spacing: .1em; }
+    .card-preview .p-val { font-size: 13px; font-weight: 600; }
+    .card-preview .p-network { position: absolute; top: 18px; right: 18px; font-size: 26px; opacity: .85; }
+
+    /* UPI Preview */
+    .upi-preview {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 20px;
+      display: flex; align-items: center; gap: 16px; margin-bottom: 8px;
+    }
+    .upi-preview-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff;
+      flex-shrink: 0;
+    }
+    .upi-preview-vpa { font-size: 15px; font-weight: 700; color: var(--text); }
+    .upi-preview-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .upi-verified-indicator {
+      margin-left: auto; display: flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 700; color: #10b981;
+    }
+    .upi-pending-indicator {
+      margin-left: auto; display: flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 700; color: var(--muted);
+    }
+
+    /* Color picker */
+    .color-swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-swatch {
+      width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent; transition: border-color .15s, transform .15s;
+    }
+    .color-swatch.selected { border-color: var(--text); transform: scale(1.15); }
+
+    /* Razorpay button */
+    .rzp-btn {
+      width: 100%; padding: 13px; border: none; border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, #528FF0 0%, #3a6ed4 100%);
+      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: opacity .18s, transform .18s; letter-spacing: .01em;
+    }
+    .rzp-btn:hover { opacity: .9; transform: translateY(-1px); }
+    .rzp-btn:active { transform: translateY(0); }
+    .rzp-btn img { height: 18px; filter: brightness(0) invert(1); }
+    .rzp-security-note {
+      text-align: center; font-size: 11px; color: var(--muted); margin-top: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+
+    .section-divider {
+      font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em;
+      margin: 4px 0 0; display: flex; align-items: center; gap: 10px;
+    }
+    .section-divider::before, .section-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* Spinner */
+    .spin-icon { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Validate UPI loading */
+    .upi-checking { color: var(--muted); font-size: 12px; display: none; align-items: center; gap: 6px; }
+    .upi-checking.show { display: flex; }
+    .upi-result { font-size: 12px; font-weight: 700; margin-top: 4px; }
+    .upi-result.success { color: #10b981; }
+    .upi-result.error { color: #ef4444; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💰</div>
+      <div class="brand-text"><b>FinanceAI</b><small>Smart Money Manager</small></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <a href="index.html"       class="nav-item" data-page="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+      <a href="transaction.html" class="nav-item" data-page="transactions"><i class="fas fa-exchange-alt"></i><span>Transactions</span></a>
+      <a href="wallet.html"      class="nav-item active" data-page="wallet"><i class="fas fa-wallet"></i><span>Wallet</span></a>
+      <a href="goals.html"       class="nav-item" data-page="goals"><i class="fas fa-bullseye"></i><span>Goals</span></a>
+      <a href="budget.html"      class="nav-item" data-page="budget"><i class="fas fa-chart-bar"></i><span>Budget</span></a>
+      <a href="analytics.html"   class="nav-item" data-page="analytics"><i class="fas fa-chart-line"></i><span>Analytics</span></a>
+      <a href="settings.html"    class="nav-item" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <a href="#" class="nav-item"><i class="fas fa-question-circle"></i><span>Help</span></a>
+      <button class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Log out</span></button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-greeting">
+        <h1 id="topbarGreeting">My Wallet</h1>
+        <p id="topbarSub"></p>
+      </div>
+      <div class="topbar-right">
+
+        <button class="btn btn-outline" onclick="openSmsModal()" id="btn-sms-sync"
+          style="display:flex;align-items:center;gap:7px;border-color:rgba(16,185,129,.5);color:#10b981;">
+          <i class="fas fa-sms"></i> Sync from SMS
+        </button>
+        <button class="btn btn-primary" onclick="openAddModal()" id="btn-add-account">
+          <i class="fas fa-plus"></i> Add Account
+        </button>
+        <div class="user-chip">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-info">
+            <span id="userNameChip">User</span>
+            <small id="userEmailChip"></small>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="wallet-header-row">
+        <div>
+          <div class="page-heading">Wallet</div>
+          <div class="page-subtitle">Manage all your linked accounts — cards, UPI & bank.</div>
+        </div>
+        <!-- Tab filter -->
+        <div class="wallet-tabs" id="walletTabs">
+          <button class="wallet-tab active" data-filter="all" onclick="filterWallets(this,'all')"><i class="fas fa-th"></i> All</button>
+          <button class="wallet-tab" data-filter="credit" onclick="filterWallets(this,'credit')"><i class="fas fa-credit-card"></i> Credit</button>
+          <button class="wallet-tab" data-filter="debit" onclick="filterWallets(this,'debit')"><i class="fas fa-money-check-alt"></i> Debit</button>
+          <button class="wallet-tab" data-filter="upi" onclick="filterWallets(this,'upi')"><i class="fas fa-mobile-alt"></i> UPI</button>
+          <button class="wallet-tab" data-filter="bank" onclick="filterWallets(this,'bank')"><i class="fas fa-university"></i> Bank</button>
+        </div>
+      </div>
+
+      <!-- Total Banner -->
+      <div class="total-balance-banner">
+        <div style="position:relative;z-index:1;">
+          <div class="banner-label">Total Balance
+
+          </div>
+          <div class="banner-amount" id="totalBalance" data-real="0">&#8377;0.00</div>
+          <div class="banner-sub" id="totalAccounts">across 0 accounts</div>
+        </div>
+        <div style="position:relative;z-index:1;">
+          <div class="rzp-badge">
+            <i class="fas fa-shield-alt" style="color:#528FF0;font-size:16px;"></i>
+            <div>
+              <div style="font-size:11px;font-weight:700;opacity:.8;">Secured by Razorpay</div>
+              <span>PCI-DSS Compliant</span>
+            </div>
+          </div>
+          <div style="font-size:11px;opacity:.4;text-align:right;margin-top:8px;" id="lastUpdatedTime"></div>
+        </div>
+      </div>
+
+      <!-- Wallet Grid -->
+      <div class="wallet-grid" id="walletGrid">
+        <!-- Injected -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ ADD ACCOUNT MODAL ═══════════════════════════ -->
+<div class="modal-overlay" id="walletModal" style="display:none;" onclick="closeModal(event)">
+  <div class="modal" role="dialog" style="max-width:480px;width:94%;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">Add Account</h2>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;max-height:80vh;">
+
+      <!-- Type Selector -->
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Account Type</label>
+        <div class="type-selector">
+          <div class="type-btn active" data-type="credit" onclick="selectType('credit', this)">
+            <i class="fas fa-credit-card"></i><span>Credit Card</span>
+          </div>
+          <div class="type-btn" data-type="debit" onclick="selectType('debit', this)">
+            <i class="fas fa-money-check-alt"></i><span>Debit Card</span>
+          </div>
+          <div class="type-btn" data-type="upi" onclick="selectType('upi', this)">
+            <i class="fas fa-mobile-alt"></i><span>UPI</span>
+          </div>
+          <div class="type-btn" data-type="bank" onclick="selectType('bank', this)">
+            <i class="fas fa-university"></i><span>Bank A/C</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── CARD SECTION (credit / debit) ───── -->
+      <div id="section-card">
+        <!-- Live Card Preview -->
+        <div class="card-preview-wrap">
+          <div class="card-preview" id="liveCardPreview">
+            <div class="shine"></div>
+            <div class="chip"></div>
+            <div class="p-number" id="prevNumber">•••• •••• •••• ••••</div>
+            <div class="p-meta">
+              <div>
+                <div class="p-label">Card Holder</div>
+                <div class="p-val" id="prevName">YOUR NAME</div>
+              </div>
+              <div>
+                <div class="p-label">Expires</div>
+                <div class="p-val" id="prevExpiry">MM/YY</div>
+              </div>
+            </div>
+            <div class="p-network" id="prevNetwork"><i class="fab fa-cc-visa"></i></div>
+          </div>
+        </div>
+
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:14px;">
+          <i class="fas fa-lock" style="margin-right:4px;"></i>Live preview — card data processed securely via Razorpay
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cardHolder">Cardholder Name</label>
+          <div class="form-input-icon">
+            <i class="fas fa-user"></i>
+            <input type="text" class="form-input" id="cardHolder" placeholder="As printed on card" autocomplete="cc-name" oninput="updatePreview()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cardNumber">Card Number</label>
+          <div class="form-input-icon">
+            <i class="fas fa-credit-card" id="cardNetworkIcon"></i>
+            <input type="text" class="form-input" id="cardNumber" placeholder="•••• •••• •••• ••••"
+              maxlength="19" autocomplete="cc-number"
+              oninput="formatCardNumber(this); detectNetwork(this.value); updatePreview()"
+              style="letter-spacing:.1em;">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label class="form-label" for="cardExpiry">Expiry Date</label>
+            <div class="form-input-icon">
+              <i class="fas fa-calendar-alt"></i>
+              <input type="text" class="form-input" id="cardExpiry" placeholder="MM/YY" maxlength="5"
+                autocomplete="cc-exp" oninput="formatExpiry(this); updatePreview()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cardCvv">CVV</label>
+            <div class="form-input-icon">
+              <i class="fas fa-lock"></i>
+              <input type="password" class="form-input" id="cardCvv" placeholder="•••" maxlength="4" autocomplete="cc-csc">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cardNickname">Account Nickname (optional)</label>
+          <div class="form-input-icon">
+            <i class="fas fa-tag"></i>
+            <input type="text" class="form-input" id="cardNickname" placeholder="e.g. HDFC Millennia">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cardBalance">Current Balance / Credit Used (₹)</label>
+          <div class="form-input-icon">
+            <i class="fas fa-rupee-sign"></i>
+            <input type="number" class="form-input" id="cardBalance" placeholder="0.00">
+          </div>
+        </div>
+
+        <!-- Color picker -->
+        <div class="form-group" id="colorPickerGroup">
+          <label class="form-label">Card Color Theme</label>
+          <div class="color-swatch-row">
+            <div class="color-swatch selected" style="background:#1a1f71;" data-color="#1a1f71" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#1c1c1e;" data-color="#1c1c1e" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#064e3b;" data-color="#064e3b" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#7c3aed;" data-color="#7c3aed" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#dc2626;" data-color="#dc2626" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#0891b2;" data-color="#0891b2" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#6d28d9;" data-color="#6d28d9" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#1e40af;" data-color="#1e40af" onclick="pickColor(this)"></div>
+          </div>
+        </div>
+
+        <!-- PRIMARY: Save Card Button -->
+        <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;font-weight:700;margin-top:8px;"
+          onclick="saveCardManually()" id="btn-save-card">
+          <i class="fas fa-plus-circle"></i> Add Card to Wallet
+        </button>
+        <p style="text-align:center;font-size:11px;color:var(--muted);margin:8px 0 0;">
+          <i class="fas fa-lock" style="color:#10b981;"></i>
+          Card details stored securely. Balance can be updated via SMS Sync.
+        </p>
+
+        <!-- Razorpay — Optional / advanced -->
+        <details style="margin-top:14px;">
+          <summary style="
+            font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;
+            list-style:none;display:flex;align-items:center;gap:6px;padding:8px 0;
+            border-top:1px solid var(--border);">
+            <i class="fas fa-chevron-right" style="font-size:9px;transition:transform .2s;"></i>
+            Razorpay Card Verification (optional — for testing only)
+          </summary>
+
+          <!-- Test mode warning -->
+          <div style="
+            background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);
+            border-radius:12px;padding:10px 12px;margin:10px 0;
+            display:flex;gap:8px;align-items:flex-start;">
+            <i class="fas fa-exclamation-triangle" style="color:#f59e0b;flex-shrink:0;margin-top:1px;"></i>
+            <div style="font-size:11px;color:var(--muted);line-height:1.7;">
+              <b style="color:var(--text);">Test Mode Limitation:</b> Real debit/credit cards always fail in Razorpay test mode.
+              <br>Use these test card details only:
+              <div style="font-family:monospace;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:11px;line-height:1.9;">
+                <b>Card:</b> 4111 1111 1111 1111<br>
+                <b>Expiry:</b> 12/26 &nbsp; <b>CVV:</b> 123<br>
+                <b>OTP:</b> 1234 (when asked)
+              </div>
+            </div>
+          </div>
+
+          <button class="rzp-btn" onclick="openRazorpayForCard()" id="btn-rzp-card"
+            style="opacity:.8;font-size:13px;padding:12px 16px;">
+            <i class="fas fa-lock"></i>
+            <span>Verify via Razorpay (₹1 — test cards only)</span>
+          </button>
+          <p class="rzp-security-note" style="font-size:10px;opacity:.6;">
+            <i class="fas fa-shield-alt" style="color:#528FF0;"></i>
+            Secured by Razorpay · 256-bit SSL · PCI-DSS Level 1
+          </p>
+        </details>
+      </div>
+
+
+      <!-- ───── UPI SECTION ───── -->
+      <div id="section-upi" style="display:none;">
+
+        <!-- UPI App selector -->
+        <div class="form-group">
+          <label class="form-label">UPI App</label>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;" id="upiAppGrid">
+            <div class="type-btn active" data-upiapp="phonepe" data-handle="ybl" onclick="selectUpiApp(this)">
+              <i class="fas fa-mobile-alt" style="color:#5f259f;"></i><span>PhonePe</span>
+            </div>
+            <div class="type-btn" data-upiapp="gpay" data-handle="okaxis" onclick="selectUpiApp(this)">
+              <i class="fab fa-google" style="color:#4285F4;"></i><span>Google Pay</span>
+            </div>
+            <div class="type-btn" data-upiapp="paytm" data-handle="paytm" onclick="selectUpiApp(this)">
+              <i class="fas fa-wallet" style="color:#00BAF2;"></i><span>Paytm</span>
+            </div>
+            <div class="type-btn" data-upiapp="other" data-handle="" onclick="selectUpiApp(this)">
+              <i class="fas fa-ellipsis-h" style="color:var(--muted);"></i><span>Other</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="upiId">UPI ID (VPA)</label>
+          <div class="form-input-icon">
+            <i class="fas fa-at"></i>
+            <input type="text" class="form-input" id="upiId" placeholder="yourname@ybl"
+              oninput="onUpiInput()" style="letter-spacing:.02em;">
+          </div>
+          <div class="upi-checking" id="upiChecking">
+            <i class="fas fa-circle-notch spin-icon"></i> Verifying with Razorpay...
+          </div>
+          <div class="upi-result" id="upiResult"></div>
+        </div>
+
+        <!-- UPI Preview -->
+        <div class="upi-preview" id="upiPreview" style="display:none;">
+          <div class="upi-preview-icon" id="upiPreviewIcon"><i class="fas fa-mobile-alt"></i></div>
+          <div>
+            <div class="upi-preview-vpa" id="upiPreviewVpa">—</div>
+            <div class="upi-preview-sub" id="upiPreviewName">Verifying...</div>
+          </div>
+          <div class="upi-verified-indicator" id="upiVerifiedBadge" style="display:none;">
+            <i class="fas fa-check-circle"></i> Verified
+          </div>
+          <div class="upi-pending-indicator" id="upiPendingBadge">
+            <i class="fas fa-clock"></i> Pending
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="upiBalance">Linked Bank Balance (₹ — optional)</label>
+          <div class="form-input-icon">
+            <i class="fas fa-rupee-sign"></i>
+            <input type="number" class="form-input" id="upiBalance" placeholder="0.00">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="saveUpi()" id="btn-save-upi">
+          <i class="fas fa-link"></i> Link UPI Account
+        </button>
+      </div>
+
+      <!-- ───── BANK A/C SECTION ───── -->
+      <div id="section-bank" style="display:none;">
+        <div class="form-group">
+          <label class="form-label" for="bankName">Bank Name</label>
+          <div class="form-input-icon">
+            <i class="fas fa-university"></i>
+            <input type="text" class="form-input" id="bankName" placeholder="e.g. State Bank of India">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label class="form-label" for="bankAccNum">Account Number (last 4 digits)</label>
+            <div class="form-input-icon">
+              <i class="fas fa-hashtag"></i>
+              <input type="text" class="form-input" id="bankAccNum" maxlength="4" placeholder="1234">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ifscCode">IFSC Code (optional)</label>
+            <div class="form-input-icon">
+              <i class="fas fa-code"></i>
+              <input type="text" class="form-input" id="ifscCode" placeholder="SBIN0001234" style="text-transform:uppercase;">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="bankBalance">Current Balance (₹)</label>
+          <div class="form-input-icon">
+            <i class="fas fa-rupee-sign"></i>
+            <input type="number" class="form-input" id="bankBalance" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Color</label>
+          <div class="color-swatch-row" id="bankColorPicker">
+            <div class="color-swatch selected" style="background:#7c3aed;" data-color="#7c3aed" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#2563eb;" data-color="#2563eb" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#059669;" data-color="#059669" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#0891b2;" data-color="#0891b2" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#dc2626;" data-color="#dc2626" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#d97706;" data-color="#d97706" onclick="pickColor(this)"></div>
+            <div class="color-swatch" style="background:#1e1b4b;" data-color="#1e1b4b" onclick="pickColor(this)"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="saveBankAccount()" id="btn-save-bank">
+          <i class="fas fa-university"></i> Add Bank Account
+        </button>
+      </div>
+
+    </div><!-- /modal-body -->
+  </div>
+</div>
+
+<div class="toast-container"></div>
+
+<!-- ══════════════════════ SMS SYNC MODAL ══════════════════════ -->
+<div class="modal-overlay" id="smsModal" style="display:none;" onclick="closeSmsModal(event)">
+  <div class="modal" role="dialog" style="max-width:520px;width:94%;">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <i class="fas fa-sms" style="color:#10b981;margin-right:8px;"></i>Sync from Bank SMS
+      </h2>
+      <button class="modal-close" onclick="closeSmsModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;max-height:80vh;">
+
+      <!-- How it works banner -->
+      <div style="
+        background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(16,185,129,.05));
+        border:1px solid rgba(16,185,129,.25);border-radius:14px;
+        padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;">
+        <i class="fas fa-info-circle" style="color:#10b981;margin-top:2px;flex-shrink:0;font-size:16px;"></i>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">How CRED does it — now in your app!</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+            Paste your bank debit/credit SMS below. Our AI parser will auto-detect your bank, 
+            account number, balance and transaction. Works for SBI, HDFC, ICICI, Axis, Kotak, Paytm & more.
+          </div>
+        </div>
+      </div>
+
+      <!-- SMS Input -->
+      <div class="form-group">
+        <label class="form-label">Paste Bank SMS (one per line or multiple)</label>
+        <textarea id="smsInput" class="form-input" rows="5"
+          style="resize:vertical;font-size:12px;font-family:monospace;letter-spacing:.01em;line-height:1.7;"
+          placeholder="Example:&#10;HDFC Bank: Rs.500 debited from a/c **1234 on 12-04-2026. Avl Bal: Rs.45,230.50&#10;&#10;SBI: Your a/c XX1234 debited by Rs.1000 on 12-Apr. Balance Rs.23,500.00&#10;&#10;Paste your actual bank SMS here..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;margin-bottom:16px;" onclick="parseSmsMessages()" id="btn-parse-sms">
+        <i class="fas fa-magic"></i> Parse & Detect Balance
+      </button>
+
+      <!-- Results area -->
+      <div id="smsResults" style="display:none;">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">
+          Detected Results
+        </div>
+        <div id="smsResultsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="wallet.js"></script>
+</body>
+</html>

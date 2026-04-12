@@ -1,3 +1,6 @@
+import sys, io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pickle
@@ -7,23 +10,27 @@ import numpy as np
 app = Flask(__name__)
 CORS(app)
 
+# Module-level declarations so type checkers (Pyrefly) can resolve these names
+model = None
+model_columns: list = []
+
 # Load model and columns
 def load_or_train_model():
     global model, model_columns
     try:
         model = pickle.load(open('finance_model.pkl', 'rb'))
         model_columns = pickle.load(open('model_columns.pkl', 'rb'))
-        print("✅ Model loaded successfully!")
+        print("[OK] Model loaded successfully!")
     except Exception as e:
-        print(f"⚠️ Model load failed ({e}), retraining...")
+        print(f"[WARN] Model load failed ({e}), retraining...")
         try:
             import subprocess
             subprocess.run(['python', 'train.py'], check=True)
             model = pickle.load(open('finance_model.pkl', 'rb'))
             model_columns = pickle.load(open('model_columns.pkl', 'rb'))
-            print("✅ Model retrained and loaded!")
+            print("[OK] Model retrained and loaded!")
         except Exception as e2:
-            print(f"❌ Retrain failed: {e2}")
+            print(f"[ERROR] Retrain failed: {e2}")
             model = None
             model_columns = []
 
@@ -114,9 +121,6 @@ def predict():
             "income": income,
             "current_expense": prev_expense
         })
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
