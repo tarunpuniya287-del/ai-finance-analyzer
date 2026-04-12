@@ -275,6 +275,9 @@
 
     <!-- Topbar -->
     <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleMobileSidebar()" aria-label="Toggle menu">
+        <i class="fas fa-bars"></i>
+      </button>
       <div class="topbar-greeting">
         <h1 id="topbarGreeting">Welcome back!</h1>
         <p id="topbarSub"></p>
@@ -515,6 +518,25 @@
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- ── Mobile Bottom Navigation ──────────────────────────────── -->
+<nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+  <a href="dashboard.html" class="mobile-nav-item active">
+    <i class="fas fa-th-large"></i><span>Home</span>
+  </a>
+  <a href="transaction.html" class="mobile-nav-item">
+    <i class="fas fa-exchange-alt"></i><span>Txns</span>
+  </a>
+  <a href="wallet.html" class="mobile-nav-item">
+    <i class="fas fa-wallet"></i><span>Wallet</span>
+  </a>
+  <a href="budget.html" class="mobile-nav-item">
+    <i class="fas fa-chart-bar"></i><span>Budget</span>
+  </a>
+  <a href="analytics.html" class="mobile-nav-item">
+    <i class="fas fa-chart-line"></i><span>Analytics</span>
+  </a>
+</nav>
 
 <!-- ── Add Transaction Modal ────────────────────── -->
 <div class="modal-overlay" id="addModal" style="display:none;" onclick="closeAddModal(event)">

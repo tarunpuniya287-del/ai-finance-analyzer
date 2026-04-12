@@ -262,3 +262,39 @@ const APP = (() => {
 
 // Global logout accessible from HTML onclick
 function logout() { APP.logout(); }
+
+// ── Mobile Sidebar Toggle ──────────────────────────────────────
+function toggleMobileSidebar() {
+  const sidebar  = document.querySelector('.sidebar');
+  const overlay  = document.querySelector('.sidebar-overlay');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('visible', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+
+function closeMobileSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.querySelector('.sidebar-overlay');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+// Auto-close sidebar when a nav link is tapped on mobile
+document.addEventListener('DOMContentLoaded', () => {
+  // Add overlay to DOM if not present
+  if (!document.querySelector('.sidebar-overlay')) {
+    const overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    overlay.addEventListener('click', closeMobileSidebar);
+    document.body.appendChild(overlay);
+  }
+
+  // Close sidebar on any nav item click (mobile)
+  document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeMobileSidebar();
+    });
+  });
+});

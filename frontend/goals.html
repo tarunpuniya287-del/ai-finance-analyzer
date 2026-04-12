@@ -126,6 +126,9 @@
   <!-- Main -->
   <div class="main">
     <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleMobileSidebar()" aria-label="Toggle menu">
+        <i class="fas fa-bars"></i>
+      </button>
       <div class="topbar-greeting">
         <h1 id="topbarGreeting">Saving Goals</h1>
         <p id="topbarSub"></p>
@@ -184,6 +187,25 @@
     </div>
   </div>
 </div>
+
+<!-- ── Mobile Bottom Navigation ──────────────────────────────── -->
+<nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+  <a href="dashboard.html" class="mobile-nav-item">
+    <i class="fas fa-th-large"></i><span>Home</span>
+  </a>
+  <a href="transaction.html" class="mobile-nav-item">
+    <i class="fas fa-exchange-alt"></i><span>Txns</span>
+  </a>
+  <a href="wallet.html" class="mobile-nav-item">
+    <i class="fas fa-wallet"></i><span>Wallet</span>
+  </a>
+  <a href="goals.html" class="mobile-nav-item active">
+    <i class="fas fa-bullseye"></i><span>Goals</span>
+  </a>
+  <a href="analytics.html" class="mobile-nav-item">
+    <i class="fas fa-chart-line"></i><span>Analytics</span>
+  </a>
+</nav>
 
 <!-- Add/Edit Goal Modal -->
 <div class="modal-overlay" id="goalModal" style="display:none;" onclick="closeModal(event)">
