@@ -291,47 +291,9 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── Mobile brand header (shows only when left panel is hidden) ── */
-        .mobile-brand-header {
-            display: none;
-            align-items: center; justify-content: center; gap: 10px;
-            padding: 20px 24px 0;
-            color: #6d28d9;
-            font-size: 17px; font-weight: 800;
-        }
-        .mobile-brand-header .brand-icon-m {
-            width: 34px; height: 34px;
-            background: linear-gradient(135deg, #7c3aed, #6d28d9);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 17px; color: #fff;
-        }
-
         @media (max-width: 768px) {
-            body {
-                grid-template-columns: 1fr;
-                align-items: flex-start;
-            }
+            body { grid-template-columns: 1fr; }
             .left-panel { display: none; }
-            .mobile-brand-header { display: flex; }
-            .right-panel {
-                min-height: 100svh;
-                padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
-                align-items: flex-start;
-            }
-            .login-box {
-                padding-top: 12px;
-                width: 100%;
-            }
-            .login-box h1 { font-size: 24px; }
-            /* iOS zoom prevention */
-            .form-group input { font-size: 16px !important; }
-        }
-
-        @media (max-width: 380px) {
-            .right-panel { padding: 16px 16px 24px; }
-            .login-box h1 { font-size: 22px; }
-            .form-options { flex-direction: column; align-items: flex-start; gap: 8px; }
         }
 
         /* ── FORGOT SECTION ── */
@@ -432,13 +394,6 @@
 
 <!-- ══ RIGHT PANEL ══ -->
 <div class="right-panel">
-
-    <!-- Mobile-only brand header -->
-    <div class="mobile-brand-header">
-        <div class="brand-icon-m">💰</div>
-        AI Finance Pro
-    </div>
-
     <div class="login-box">
         <h1 id="form-title">Welcome back!</h1>
         <p class="subtitle">Please enter your details</p>
