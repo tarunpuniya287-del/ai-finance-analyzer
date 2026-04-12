@@ -3,1256 +3,1440 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — AI Finance Pro</title>
-  <meta name="description" content="AI-powered personal finance dashboard with smart insights, goals, and budget tracking.">
+  <title>FinanceAI — Smart Money Manager for India</title>
+  <meta name="description" content="Track expenses, manage wallets, set goals, and get AI-powered insights. Your complete personal finance OS built for modern India.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="app.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <style>
-    /* ── Dashboard-specific styles ──────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* Period filter row */
-    .filter-row {
-      display: flex; align-items: center;
-      justify-content: space-between; gap: 12px;
+    :root {
+      --void:    #000000;
+      --near:    #0a0a0f;
+      --surface: #111118;
+      --border:  rgba(255,255,255,0.08);
+      --border-hi: rgba(255,255,255,0.15);
+      --text:    #ffffff;
+      --muted:   #888899;
+      --accent:  #7c9cff;       /* purple-blue accent */
+      --green:   #4de2b1;       /* teal-green */
+      --max:     1200px;
     }
 
-    .period-select {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 8px 16px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-pill);
-      background: var(--surface); color: var(--text);
-      font-size: 13px; font-weight: 500;
-      font-family: inherit; cursor: pointer;
-      outline: none; transition: border-color .18s;
-    }
-    .period-select:focus { border-color: var(--primary); }
-    .period-select:focus-visible { outline: dashed 2px var(--primary); outline-offset: 2px; }
+    html { scroll-behavior: smooth; }
 
-    .filter-right { display: flex; gap: 10px; }
-
-    /* Stat cards row */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--void);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Charts row */
-    .charts-row {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 16px;
+    /* ── Subtle grid overlay ── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,156,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,156,255,0.04) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    .money-flow-filters {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    .wrap { width: min(var(--max), calc(100% - 48px)); margin: 0 auto; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ════════════════════════════════════════
+       NAV
+    ════════════════════════════════════════ */
+    nav {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(var(--max), calc(100% - 32px));
+      z-index: 200;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(24px) saturate(1.6);
+      border: 1px solid var(--border-hi);
+      border-radius: 16px;
+      padding: 0 24px;
     }
 
-    .legend-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      display: inline-block;
-    }
-
-    .chart-legend {
-      display: flex; gap: 16px;
+    .nav-inner {
+      height: 62px;
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 20px;
     }
 
-    .legend-item {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--muted); font-weight: 500;
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
     }
 
-    .chart-canvas-wrap { height: 240px; position: relative; margin-top: 12px; }
-
-    /* Budget card (donut, right column) */
-    .budget-donut-wrap {
-      display: flex; flex-direction: column;
-      align-items: center; position: relative;
+    .nav-logo-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      color: #000;
     }
 
-    .donut-canvas-wrap { height: 160px; width: 160px; position: relative; margin: 8px auto 12px; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
 
-    .donut-center {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
+    .nav-links a {
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta { display: flex; align-items: center; gap: 8px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .22s ease;
+      white-space: nowrap;
+      border: none;
+    }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.13); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+      box-shadow: 0 0 32px rgba(124,156,255,0.35);
+    }
+    .btn-primary:hover {
+      background: #96afff;
+      transform: translateY(-1px);
+      box-shadow: 0 0 48px rgba(124,156,255,0.5);
+    }
+
+    .btn-hero {
+      padding: 14px 28px;
+      font-size: 0.96rem;
+    }
+
+    /* ════════════════════════════════════════
+       HERO
+    ════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      z-index: 1;
+      padding: 160px 0 80px;
+    }
+
+    /* Glow orbs */
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -100px;
+      left: -200px;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(124,156,255,0.18) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(77,226,177,0.13) 0%, transparent 65%);
       pointer-events: none;
     }
 
-    .donut-center small {
-      font-size: 10px; color: var(--muted); font-weight: 500;
-    }
-
-    .donut-center span {
-      font-size: 14px; font-weight: 700;
-      letter-spacing: -.02em; color: var(--text);
-    }
-
-    .budget-legend { width: 100%; }
-
-    .budget-legend-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
-    }
-
-    .budget-legend-item:last-child { border-bottom: none; }
-
-    .budget-legend-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
-
-    .budget-legend-name { flex: 1; color: var(--text-2); font-weight: 500; }
-
-    .budget-legend-amount { color: var(--muted); font-weight: 500; }
-
-    /* Bottom row */
-    .bottom-row {
+    .hero-grid {
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    .hero-copy { position: relative; z-index: 2; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(124,156,255,0.1);
+      border: 1px solid rgba(124,156,255,0.25);
+      color: #b8caff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--green); }
+      50% { opacity: 0.6; box-shadow: 0 0 4px var(--green); }
+    }
+
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(3rem, 5.5vw, 5.2rem);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -3.5px;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    .hero h1 .grad {
+      background: linear-gradient(100deg, #c8d8ff 0%, var(--accent) 40%, var(--green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      max-width: 460px;
+      margin-bottom: 36px;
+      letter-spacing: -0.01em;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .meta-item i { color: var(--green); font-size: 11px; }
+
+    /* ── Dashboard mockup ── */
+    .hero-visual { position: relative; z-index: 2; }
+
+    .app-shell {
+      background: linear-gradient(180deg, #0d0d18 0%, #080810 100%);
+      border: 1px solid var(--border-hi);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(124,156,255,0.08),
+        0 40px 100px rgba(0,0,0,0.6),
+        0 0 80px rgba(124,156,255,0.08) inset;
+      animation: float-card 6s ease-in-out infinite;
+    }
+
+    @keyframes float-card {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .app-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .app-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.88rem; font-weight: 700;
+    }
+
+    .app-brand-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      display: grid; place-items: center; font-size: 12px; color: #000;
+    }
+
+    .app-ai-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(77,226,177,0.1);
+      border: 1px solid rgba(77,226,177,0.2);
+      border-radius: 9999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .app-body { padding: 20px; }
+
+    .app-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+
+    .stat-mini {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 12px;
+    }
+
+    .stat-mini .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+    .stat-mini .value { font-family: 'Space Grotesk',sans-serif; font-size: 1.15rem; font-weight: 700; letter-spacing: -.03em; }
+    .stat-mini .delta { font-size: 10px; margin-top: 4px; color: var(--green); }
+    .stat-mini .delta.neg { color: #f87171; }
+
+    .app-chart { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .chart-header span { font-size: 11px; font-weight: 700; }
+    .chart-header small { font-size: 10px; color: var(--muted); }
+
+    .chart-bars-row { display: flex; align-items: flex-end; gap: 6px; height: 72px; }
+
+    .c-bar {
+      flex: 1;
+      border-radius: 4px 4px 2px 2px;
+      background: linear-gradient(180deg, var(--accent) 0%, rgba(124,156,255,0.4) 100%);
+      min-height: 8px;
+      transition: all .3s;
+    }
+
+    .c-bar.green { background: linear-gradient(180deg, var(--green) 0%, rgba(77,226,177,0.3) 100%); }
+    .c-bar.hi { box-shadow: 0 0 12px rgba(124,156,255,0.4); }
+
+    .app-tx { display: flex; flex-direction: column; gap: 8px; }
+
+    .tx-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .tx-left { display: flex; align-items: center; gap: 10px; }
+    .tx-icon { width: 30px; height: 30px; border-radius: 8px; background: rgba(124,156,255,0.12); display: grid; place-items: center; font-size: 12px; color: var(--accent); }
+    .tx-name { font-size: 12px; font-weight: 600; }
+    .tx-date { font-size: 10px; color: var(--muted); }
+    .tx-amt { font-size: 12px; font-weight: 700; }
+    .tx-amt.out { color: #f87171; }
+    .tx-amt.in { color: var(--green); }
+
+    /* Floating card */
+    .float-card {
+      position: absolute;
+      background: rgba(10,10,20,0.92);
+      border: 1px solid var(--border-hi);
+      border-radius: 14px;
+      padding: 12px 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .float-card-ai {
+      bottom: -24px;
+      left: -48px;
+      max-width: 200px;
+      animation: float-card 5s ease-in-out infinite reverse;
+    }
+
+    .float-card-ai .ai-label { font-size: 9px; color: var(--green); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+    .float-card-ai .ai-text { font-size: 11px; line-height: 1.5; color: #ccd6f6; }
+
+    .float-card-bal {
+      top: -20px;
+      right: -24px;
+      animation: float-card 7s ease-in-out infinite;
+    }
+
+    .float-card-bal .bal-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+    .float-card-bal .bal-val { font-family: 'Space Grotesk',sans-serif; font-size: 1.35rem; font-weight: 700; letter-spacing: -.04em; }
+    .float-card-bal .bal-delta { font-size: 10px; color: var(--green); margin-top: 2px; }
+
+    /* ════════════════════════════════════════
+       STATS STRIP
+    ════════════════════════════════════════ */
+    .stats-strip {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 0;
+      background: rgba(255,255,255,0.015);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 0;
+    }
+
+    .stat-item {
+      padding: 0 32px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-item .big-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 4vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -3px;
+      line-height: 1;
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-item .stat-label {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    /* ════════════════════════════════════════
+       FEATURES
+    ════════════════════════════════════════ */
+    .features {
+      position: relative; z-index: 1;
+      padding: 120px 0;
+    }
+
+    .section-eye {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .section-eye::before {
+      content: "";
+      width: 20px; height: 1px;
+      background: var(--accent);
+    }
+
+    .section-h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      font-weight: 700;
+      letter-spacing: -2.5px;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    .section-p {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.75;
+      max-width: 520px;
+      margin-bottom: 64px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
       gap: 16px;
     }
 
-    /* Recent transactions table */
-    .tx-table-wrap {
-      max-height: 320px;
-      overflow-y: auto;
+    .feat-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .28s, transform .28s, box-shadow .28s;
     }
 
-    .tx-table-wrap::-webkit-scrollbar { width: 4px; }
-    .tx-table-wrap::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
-
-    .tx-entity {
-      display: flex; align-items: center; gap: 10px;
+    .feat-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto; height: 80px;
+      background: radial-gradient(circle at top, rgba(124,156,255,0.1), transparent 72%);
+      opacity: 0;
+      transition: opacity .28s;
     }
 
-    .tx-entity-icon {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--primary-light);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; flex-shrink: 0; overflow: hidden;
+    .feat-card:hover {
+      border-color: rgba(124,156,255,0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(124,156,255,0.1);
     }
 
-    .tx-entity-name { font-size: 13px; font-weight: 600; color: var(--text); }
-    .tx-entity-method { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .feat-card:hover::before { opacity: 1; }
 
-    /* Goals sidebar */
-    .goals-list { display: flex; flex-direction: column; gap: 14px; }
+    .feat-card.accent-green:hover { border-color: rgba(77,226,177,0.3); }
+    .feat-card.accent-green::before { background: radial-gradient(circle at top, rgba(77,226,177,0.1), transparent 72%); }
 
-    .goal-item-top {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 6px;
+    .feat-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: grid; place-items: center;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      position: relative; z-index: 1;
     }
 
-    .goal-item-name {
-      font-size: 13px; font-weight: 600; color: var(--text);
+    .feat-icon.purple { background: rgba(124,156,255,0.12); color: var(--accent); }
+    .feat-icon.green  { background: rgba(77,226,177,0.1); color: var(--green); }
+    .feat-icon.gold   { background: rgba(251,191,36,0.1); color: #fbbf24; }
+
+    .feat-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; position: relative; z-index: 1; }
+    .feat-card p  { color: var(--muted); font-size: 0.92rem; line-height: 1.7; position: relative; z-index: 1; }
+
+    .feat-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      margin-top: 16px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+      position: relative; z-index: 1;
+      color: var(--accent);
     }
 
-    .goal-item-amount {
-      font-size: 12px; font-weight: 600; color: var(--muted);
+    .feat-tag.green-tag { color: var(--green); }
+
+    /* Featured double card */
+    .feat-card.double { grid-column: span 2; }
+
+    /* ════════════════════════════════════════
+       PRIVACY HIGHLIGHT
+    ════════════════════════════════════════ */
+    .privacy-section {
+      position: relative; z-index: 1;
+      padding: 0 0 120px;
     }
 
-    .goal-item-pct {
-      font-size: 11px; font-weight: 700;
-      color: var(--primary);
-      margin-top: 4px;
-    }
-
-    /* AI insight bar */
-    .ai-insight-bar {
-      display: flex; align-items: flex-start; gap: 14px;
-      padding: 14px 20px;
-      background: var(--primary-light);
-      border: 1px solid var(--purple-200);
-      border-radius: var(--radius-lg);
-    }
-
-    .ai-insight-icon {
-      width: 36px; height: 36px; flex-shrink: 0;
-      border-radius: var(--radius-pill);
-      background: var(--primary);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; color: #fff;
-    }
-
-    .ai-insight-body { flex: 1; }
-    .ai-insight-label {
-      font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .06em;
-      color: var(--primary); margin-bottom: 3px;
-    }
-    .ai-insight-msg {
-      font-size: 13px; line-height: 1.6;
-      color: var(--indigo-800); font-weight: 400;
-    }
-
-    /* Add transaction quick panel */
-    .quick-add {
+    .privacy-shell {
+      background: linear-gradient(135deg, rgba(10,10,22,0.98) 0%, rgba(15,15,30,0.98) 100%);
+      border: 1px solid var(--border-hi);
+      border-radius: 24px;
+      padding: 56px;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto auto;
-      gap: 10px; align-items: end;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
     }
 
-    @media (max-width: 1280px) {
-      .charts-row { grid-template-columns: 1fr; }
-      .bottom-row { grid-template-columns: 1fr; }
+    .privacy-shell::before {
+      content: "";
+      position: absolute;
+      top: -100px; right: -100px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(124,156,255,0.12) 0%, transparent 65%);
+      pointer-events: none;
     }
 
+    .privacy-copy { position: relative; z-index: 1; }
+
+    .privacy-visual { position: relative; z-index: 1; }
+
+    .balance-demo {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .balance-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .balance-row:last-child { border-bottom: none; }
+
+    .bal-left { display: flex; align-items: center; gap: 12px; }
+    .bal-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-size: 14px; }
+    .bal-icon.card { background: linear-gradient(135deg, #1a237e, #283593); color: #90caf9; }
+    .bal-icon.upi  { background: rgba(124,156,255,0.1); color: var(--accent); }
+    .bal-icon.bank { background: rgba(77,226,177,0.1); color: var(--green); }
+
+    .bal-name { font-size: 13px; font-weight: 600; }
+    .bal-id   { font-size: 11px; color: var(--muted); }
+
+    .bal-amount {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .bal-masked { letter-spacing: 4px; font-size: 14px; opacity: .6; }
+    .bal-eye {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      display: grid; place-items: center;
+      cursor: pointer; font-size: 11px; color: var(--muted);
+      transition: all .2s;
+    }
+    .bal-eye:hover { background: rgba(124,156,255,0.15); color: var(--accent); }
+
+    .privacy-note {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: rgba(77,226,177,0.08);
+      border: 1px solid rgba(77,226,177,0.18);
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* ════════════════════════════════════════
+       HOW IT WORKS
+    ════════════════════════════════════════ */
+    .how {
+      position: relative; z-index: 1;
+      padding: 0 0 120px;
+      border-top: 1px solid var(--border);
+      padding-top: 120px;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 24px;
+      margin-top: 64px;
+    }
+
+    .step-card {
+      position: relative;
+      padding: 32px 28px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .step-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 4rem;
+      font-weight: 700;
+      letter-spacing: -4px;
+      line-height: 1;
+      color: rgba(255,255,255,0.06);
+      margin-bottom: 16px;
+    }
+
+    .step-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: grid; place-items: center;
+      background: rgba(124,156,255,0.1);
+      color: var(--accent);
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+
+    .step-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+    .step-card p { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
+
+    .step-connector {
+      position: absolute;
+      top: 40px;
+      right: -13px;
+      width: 24px; height: 24px;
+      background: var(--void);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 9px;
+      color: var(--accent);
+      z-index: 1;
+    }
+
+    /* ════════════════════════════════════════
+       TECH STACK
+    ════════════════════════════════════════ */
+    .tech {
+      position: relative; z-index: 1;
+      padding: 0 0 120px;
+    }
+
+    .tech-wrap { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 48px; }
+
+    .tech-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all .25s;
+    }
+
+    .tech-badge:hover {
+      border-color: rgba(124,156,255,0.3);
+      color: var(--text);
+      background: rgba(124,156,255,0.06);
+      transform: translateY(-2px);
+    }
+
+    .tech-badge i { color: var(--accent); }
+
+    /* ════════════════════════════════════════
+       CTA
+    ════════════════════════════════════════ */
+    .cta-section {
+      position: relative; z-index: 1;
+      padding: 0 0 120px;
+    }
+
+    .cta-shell {
+      position: relative;
+      overflow: hidden;
+      padding: 80px 64px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(124,156,255,0.2), transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(77,226,177,0.15), transparent 40%),
+        linear-gradient(180deg, rgba(15,15,30,0.98), rgba(8,8,18,0.98));
+      border: 1px solid var(--border-hi);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .cta-shell h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -2.5px;
+      margin-bottom: 16px;
+    }
+
+    .cta-shell p { color: var(--muted); font-size: 1.05rem; line-height: 1.75; max-width: 520px; margin: 0 auto 36px; }
+
+    .cta-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+    .btn-cta-primary {
+      padding: 16px 36px;
+      font-size: 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      color: #000;
+      font-weight: 800;
+      border-radius: 9999px;
+      box-shadow: 0 0 48px rgba(124,156,255,0.4);
+      transition: all .25s;
+    }
+
+    .btn-cta-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 72px rgba(124,156,255,0.6);
+    }
+
+    /* ════════════════════════════════════════
+       FOOTER
+    ════════════════════════════════════════ */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .footer-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.95rem; }
+    .footer-copy { color: var(--muted); font-size: 0.85rem; }
+
+    .footer-links { display: flex; align-items: center; gap: 24px; list-style: none; }
+    .footer-links a { color: var(--muted); font-size: 0.85rem; font-weight: 500; transition: color .2s; }
+    .footer-links a:hover { color: var(--text); }
+
+    /* ════════════════════════════════════════
+       SCROLL ANIMATIONS — Cinematic System
+    ════════════════════════════════════════ */
+
+    /* Base hidden state */
+    .reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-blur {
+      will-change: transform, opacity;
+    }
+
+    /* Fade up */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity .75s cubic-bezier(0.16,1,0.3,1),
+                  transform .75s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Fade from left */
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-40px);
+      transition: opacity .8s cubic-bezier(0.16,1,0.3,1),
+                  transform .8s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+
+    /* Fade from right */
+    .reveal-right {
+      opacity: 0;
+      transform: translateX(40px);
+      transition: opacity .8s cubic-bezier(0.16,1,0.3,1),
+                  transform .8s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+    /* Scale up */
+    .reveal-scale {
+      opacity: 0;
+      transform: scale(0.88);
+      transition: opacity .7s cubic-bezier(0.16,1,0.3,1),
+                  transform .7s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+    /* Blur in */
+    .reveal-blur {
+      opacity: 0;
+      filter: blur(12px);
+      transform: translateY(20px);
+      transition: opacity .9s cubic-bezier(0.16,1,0.3,1),
+                  transform .9s cubic-bezier(0.16,1,0.3,1),
+                  filter .9s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal-blur.visible { opacity: 1; filter: blur(0); transform: translateY(0); }
+
+    /* Stagger delays */
+    .d1 { transition-delay: .08s !important; }
+    .d2 { transition-delay: .16s !important; }
+    .d3 { transition-delay: .24s !important; }
+    .d4 { transition-delay: .32s !important; }
+    .d5 { transition-delay: .40s !important; }
+    .d6 { transition-delay: .48s !important; }
+
+    /* Section header entrance */
+    .section-eye   { transition-delay: 0s !important; }
+    .section-h2    { transition-delay: .06s !important; }
+    .section-p     { transition-delay: .12s !important; }
+
+    /* ── Hover Lift (alive feel) ── */
+    .feat-card, .step-card, .tech-badge, .proof-card {
+      transition: transform .3s cubic-bezier(0.34,1.56,0.64,1),
+                  border-color .3s ease,
+                  box-shadow .3s ease !important;
+    }
+
+    .step-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(124,156,255,0.25);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(124,156,255,0.08);
+    }
+
+    .tech-badge:hover {
+      transform: translateY(-3px) scale(1.03);
+      border-color: rgba(124,156,255,0.3);
+      background: rgba(124,156,255,0.08) !important;
+      color: var(--text) !important;
+    }
+
+
+
+    /* ════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════ */
     @media (max-width: 1024px) {
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
-      .quick-add { grid-template-columns: 1fr 1fr; }
+      .hero-grid, .privacy-shell { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .features-grid { grid-template-columns: repeat(2,1fr); }
+      .feat-card.double { grid-column: span 1; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); gap: 24px; }
+      .stat-item { border-right: none; padding: 0; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+      .stat-item:nth-child(even) { border-bottom: none; }
+      .steps-grid { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 640px) {
-      .stats-row { grid-template-columns: 1fr; }
-      .quick-add { grid-template-columns: 1fr; }
-    }
-    
-    @media (max-width: 480px) {
-      .stat-card-value { font-size: 24px; }
-      .stat-card { padding: 16px; }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .features-grid { grid-template-columns: 1fr; }
+      .cta-shell { padding: 48px 24px; }
+      .privacy-shell { padding: 32px 24px; }
     }
   </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- ── Sidebar ────────────────────────────────────────────── -->
-  <nav class="sidebar" aria-label="Main navigation">
-    <div class="sidebar-brand">
-      <div class="brand-icon">💰</div>
-      <div class="brand-text">
-        <b>FinanceAI</b>
-        <small>Smart Money Manager</small>
-      </div>
+<!-- ════ NAV ════ -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark"><i class="fas fa-chart-line"></i></div>
+      FinanceAI
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#privacy">Privacy</a></li>
+      <li><a href="#how">How it Works</a></li>
+      <li><a href="#tech">Tech</a></li>
+    </ul>
+
+    <div class="nav-cta">
+      <a href="login.html" class="btn btn-ghost">Sign In</a>
+      <button class="btn btn-primary" style="cursor: default; opacity: 0.7;" disabled>Get Started <i class="fas fa-arrow-right"></i></button>
     </div>
+  </div>
+</nav>
 
-    <div class="nav-section">
-      <div class="nav-section-label">Main</div>
-      <a href="index.html"       class="nav-item active" data-page="dashboard">
-        <i class="fas fa-th-large"></i><span>Dashboard</span>
-      </a>
-      <a href="transaction.html" class="nav-item" data-page="transactions">
-        <i class="fas fa-exchange-alt"></i><span>Transactions</span>
-      </a>
-      <a href="wallet.html"      class="nav-item" data-page="wallet">
-        <i class="fas fa-wallet"></i><span>Wallet</span>
-      </a>
-      <a href="goals.html"       class="nav-item" data-page="goals">
-        <i class="fas fa-bullseye"></i><span>Goals</span>
-      </a>
-      <a href="budget.html"      class="nav-item" data-page="budget">
-        <i class="fas fa-chart-bar"></i><span>Budget</span>
-      </a>
-      <a href="analytics.html"   class="nav-item" data-page="analytics">
-        <i class="fas fa-chart-line"></i><span>Analytics</span>
-      </a>
-      <a href="settings.html"    class="nav-item" data-page="settings">
-        <i class="fas fa-cog"></i><span>Settings</span>
-      </a>
-    </div>
+<main>
 
-    <div class="sidebar-spacer"></div>
+  <!-- ════ HERO ════ -->
+  <section class="hero" id="home">
+    <div class="wrap hero-grid">
 
-    <div class="sidebar-footer">
-      <a href="#" class="nav-item">
-        <i class="fas fa-question-circle"></i><span>Help</span>
-      </a>
-      <button class="nav-item" onclick="logout()" id="btn-logout">
-        <i class="fas fa-sign-out-alt"></i><span>Log out</span>
-      </button>
-    </div>
-  </nav>
-
-  <!-- ── Main ───────────────────────────────────────────────── -->
-  <div class="main">
-
-    <!-- Topbar -->
-    <header class="topbar">
-      <div class="topbar-greeting">
-        <h1 id="topbarGreeting">Welcome back!</h1>
-        <p id="topbarSub"></p>
-      </div>
-      <div class="topbar-right">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" id="searchInput" placeholder="Search transactions…" oninput="searchTransactions(this.value)">
+      <div class="hero-copy">
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          AI-Powered Personal Finance OS
         </div>
-        <button class="notif-btn" id="notifBtn" aria-label="Notifications">
-          <i class="fas fa-bell"></i>
-          <span class="notif-badge" id="notifBadge">0</span>
-        </button>
-        <div class="user-chip">
-          <div class="user-avatar" id="userAvatar">U</div>
-          <div class="user-info">
-            <span id="userNameChip">User</span>
-            <small id="userEmailChip"></small>
-          </div>
-        </div>
-      </div>
-    </header>
 
-    <!-- Content -->
-    <div class="content">
+        <h1>
+          Your money.<br>
+          <span class="grad">Fully under control.</span>
+        </h1>
 
-      <!-- Filter row -->
-      <div class="filter-row">
-        <select class="period-select" id="periodSelect" onchange="loadDashboard()">
-          <option value="this_month">📅 This month</option>
-          <option value="last_month">Last month</option>
-          <option value="last_3months">Last 3 months</option>
-          <option value="this_year">This year</option>
-        </select>
-        <div class="filter-right">
-          <button class="btn btn-primary btn-sm" onclick="openAddModal()">
-            <i class="fas fa-plus"></i> Add transaction
+        <p class="hero-desc">
+          Track every rupee, manage all your accounts, set goals, and get AI advice — in one elegant workspace built for modern India.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-hero" style="cursor: default; opacity: 0.8;" disabled>
+            Start for Free <i class="fas fa-rocket"></i>
           </button>
+          <a href="#features" class="btn btn-ghost btn-hero">
+            See Features
+          </a>
+        </div>
+
+        <div class="hero-meta">
+          <div class="meta-item"><i class="fas fa-check-circle"></i> No credit card required</div>
+          <div class="meta-item"><i class="fas fa-check-circle"></i> Privacy-first by design</div>
+          <div class="meta-item"><i class="fas fa-check-circle"></i> Real-time sync</div>
         </div>
       </div>
 
-      <!-- Stat cards — Fi Money style -->
-      <div class="stats-row">
-
-        <!-- 1. Wallet Balance -->
-        <div class="stat-card" id="card-balance">
-          <div class="stat-card-top">
-            <span class="stat-card-label">Wallet Balance</span>
-            <button class="stat-card-link" onclick="window.location='wallet.html'" aria-label="View wallet">
-              <i class="fas fa-arrow-up-right-from-square"></i>
-            </button>
+      <!-- Dashboard Mockup -->
+      <div class="hero-visual">
+        <div style="position:relative;padding:24px 24px 24px 0;">
+          <div class="float-card float-card-bal">
+            <div class="bal-label">Net Worth</div>
+            <div class="bal-val">₹2,84,550</div>
+            <div class="bal-delta"><i class="fas fa-arrow-up"></i> +8.4% this month</div>
           </div>
-          <div class="stat-card-value" id="statBalance">₹0<span class="decimal">.00</span></div>
-          <div id="balanceChange"><span class="stat-card-change" style="font-size:11px;color:#10b981;"><i class="fas fa-wallet"></i> Total available balance</span></div>
-        </div>
 
-        <!-- 2. This Month Spent -->
-        <div class="stat-card" id="card-expense">
-          <div class="stat-card-top">
-            <span class="stat-card-label">This Month Spent</span>
-            <button class="stat-card-link" onclick="window.location='transaction.html'" aria-label="View transactions">
-              <i class="fas fa-arrow-up-right-from-square"></i>
-            </button>
-          </div>
-          <div class="stat-card-value" id="statExpense">₹0<span class="decimal"></span></div>
-          <div id="expenseChange">—</div>
-        </div>
-
-        <!-- 3. Savings Rate -->
-        <div class="stat-card" id="card-savings">
-          <div class="stat-card-top">
-            <span class="stat-card-label">Savings Rate</span>
-            <button class="stat-card-link" onclick="window.location='analytics.html'" aria-label="View analytics">
-              <i class="fas fa-arrow-up-right-from-square"></i>
-            </button>
-          </div>
-          <div class="stat-card-value" id="statSavings">0<span class="decimal">%</span></div>
-          <div id="savingsChange">—</div>
-        </div>
-
-        <!-- 4. Goals Progress -->
-        <div class="stat-card" id="card-goals">
-          <div class="stat-card-top">
-            <span class="stat-card-label">Goals Progress</span>
-            <button class="stat-card-link" onclick="window.location='goals.html'" aria-label="View goals">
-              <i class="fas fa-arrow-up-right-from-square"></i>
-            </button>
-          </div>
-          <div class="stat-card-value" id="statGoals">0<span class="decimal">%</span></div>
-          <div id="goalsChange"><span style="font-size:11px;color:var(--muted);"><i class="fas fa-bullseye"></i> Average completion across all goals</span></div>
-        </div>
-
-      </div>
-
-      <!-- AI Insight bar — Smart Analysis (ML + GROQ) -->
-      <div class="ai-insight-bar" style="flex-wrap:wrap;gap:10px;align-items:flex-start;padding:14px 18px;">
-        <div class="ai-insight-icon" style="margin-top:2px;"><i class="fas fa-brain"></i></div>
-        <div class="ai-insight-body" style="flex:1;min-width:200px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-            <div class="ai-insight-label" style="margin:0;">AI Smart Analysis</div>
-            <span id="mlStatusBadge" style="display:none;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;"></span>
-          </div>
-          <div class="ai-insight-msg" id="aiInsight">Analyzing your finances…</div>
-          <div id="mlMetaRow" style="display:none;margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;">
-            <span style="font-size:11px;color:var(--muted);">ML Budget Limit: <strong id="mlLimit" style="color:var(--text);"></strong></span>
-            <span style="font-size:11px;color:var(--muted);">Remaining: <strong id="mlRemaining" style="color:var(--income);"></strong></span>
-            <span style="font-size:11px;color:var(--muted);">Used: <strong id="mlUsed" style="color:var(--text);"></strong></span>
-          </div>
-        </div>
-        <button class="btn btn-outline btn-sm" onclick="loadAIInsight()" id="btn-refresh-insight" style="flex-shrink:0;">
-          <i class="fas fa-sync-alt"></i> Refresh
-        </button>
-      </div>
-
-      <!-- Charts row -->
-      <div class="charts-row">
-
-        <!-- Money Flow chart -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-left">
-              <div class="card-icon"><i class="fas fa-chart-bar"></i></div>
-              <span class="card-title">Money flow</span>
+          <div class="app-shell">
+            <div class="app-topbar">
+              <div class="app-brand">
+                <div class="app-brand-icon"><i class="fas fa-wallet"></i></div>
+                Dashboard — April 2026
+              </div>
+              <div class="app-ai-badge">
+                <i class="fas fa-brain"></i> AI Active
+              </div>
             </div>
-            <div class="money-flow-filters">
-              <div class="chart-legend">
-                <div class="legend-item">
-                  <span class="legend-dot" style="background:var(--primary)"></span> Income
+
+            <div class="app-body">
+              <div class="app-stats">
+                <div class="stat-mini">
+                  <div class="label">Income</div>
+                  <div class="value">₹68,000</div>
+                  <div class="delta"><i class="fas fa-arrow-up"></i> +12%</div>
                 </div>
-                <div class="legend-item">
-                  <span class="legend-dot" style="background:var(--purple-200)"></span> Expense
+                <div class="stat-mini">
+                  <div class="label">Spent</div>
+                  <div class="value">₹31,240</div>
+                  <div class="delta neg"><i class="fas fa-arrow-up"></i> -7%</div>
+                </div>
+                <div class="stat-mini">
+                  <div class="label">Saved</div>
+                  <div class="value">₹36,760</div>
+                  <div class="delta"><i class="fas fa-arrow-up"></i> +54%</div>
+                </div>
+              </div>
+
+              <div class="app-chart">
+                <div class="chart-header">
+                  <span>Spending Trend</span>
+                  <small>Last 7 months</small>
+                </div>
+                <div class="chart-bars-row">
+                  <div class="c-bar green" style="height:40%"></div>
+                  <div class="c-bar" style="height:55%"></div>
+                  <div class="c-bar green" style="height:35%"></div>
+                  <div class="c-bar" style="height:70%"></div>
+                  <div class="c-bar green" style="height:48%"></div>
+                  <div class="c-bar hi" style="height:62%"></div>
+                  <div class="c-bar green hi" style="height:46%"></div>
+                </div>
+              </div>
+
+              <div class="app-tx">
+                <div class="tx-row">
+                  <div class="tx-left">
+                    <div class="tx-icon"><i class="fas fa-shopping-bag"></i></div>
+                    <div><div class="tx-name">Amazon</div><div class="tx-date">Today, 2:30 PM</div></div>
+                  </div>
+                  <div class="tx-amt out">−₹1,499</div>
+                </div>
+                <div class="tx-row">
+                  <div class="tx-left">
+                    <div class="tx-icon" style="background:rgba(77,226,177,0.1);color:var(--green);"><i class="fas fa-briefcase"></i></div>
+                    <div><div class="tx-name">Salary Credit</div><div class="tx-date">Apr 1</div></div>
+                  </div>
+                  <div class="tx-amt in">+₹68,000</div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="card-body">
-            <div class="chart-canvas-wrap">
-              <canvas id="moneyFlowChart"></canvas>
-            </div>
+
+          <div class="float-card float-card-ai">
+            <div class="ai-label"><i class="fas fa-brain"></i> AI Insight</div>
+            <div class="ai-text">You save 54% this month! On track to meet your goal by June 🎯</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════ STATS ════ -->
+  <div class="stats-strip">
+    <div class="wrap">
+      <div class="stats-grid">
+        <div class="stat-item reveal">
+          <div class="big-num">₹10M+</div>
+          <div class="stat-label">Total transactions tracked across all users</div>
+        </div>
+        <div class="stat-item reveal" style="transition-delay:.1s">
+          <div class="big-num">6</div>
+          <div class="stat-label">Account types — cards, UPI, banks, savings &amp; more</div>
+        </div>
+        <div class="stat-item reveal" style="transition-delay:.2s">
+          <div class="big-num">99%</div>
+          <div class="stat-label">AI forecast accuracy for monthly budget predictions</div>
+        </div>
+        <div class="stat-item reveal" style="transition-delay:.3s">
+          <div class="big-num">0ms</div>
+          <div class="stat-label">Delay on real-time wallet balance sync after expense</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ FEATURES ════ -->
+  <section class="features" id="features">
+    <div class="wrap">
+      <div class="section-eye">Features</div>
+      <h2 class="section-h2">Everything your wallet needs.<br>Nothing it doesn't.</h2>
+      <p class="section-p">A full finance OS built for people who care about where every rupee goes — with AI that actually helps.</p>
+
+      <div class="features-grid">
+
+        <div class="feat-card double reveal">
+          <div class="feat-icon purple"><i class="fas fa-wallet"></i></div>
+          <h3>Smart Wallet Management</h3>
+          <p>Connect debit cards, credit cards, UPI accounts, and bank accounts in one place. Every expense automatically deducts from the right account in real time — no manual entry needed.</p>
+          <div class="feat-tag"><i class="fas fa-bolt"></i> Real-time sync</div>
+        </div>
+
+        <div class="feat-card accent-green reveal" style="transition-delay:.1s">
+          <div class="feat-icon green"><i class="fas fa-brain"></i></div>
+          <h3>AI Financial Advisor</h3>
+          <p>Get personalized insights on spending patterns, budget forecasts, and money-saving opportunities — powered by machine learning.</p>
+          <div class="feat-tag green-tag"><i class="fas fa-sparkles"></i> ML-powered</div>
+        </div>
+
+        <div class="feat-card reveal" style="transition-delay:.15s">
+          <div class="feat-icon purple"><i class="fas fa-chart-pie"></i></div>
+          <h3>Budget Control</h3>
+          <p>Set category-wise budgets. Get notified when you hit 80%. Visual progress so you always know how much runway you have.</p>
+          <div class="feat-tag"><i class="fas fa-bell"></i> Smart alerts</div>
+        </div>
+
+        <div class="feat-card reveal" style="transition-delay:.2s">
+          <div class="feat-icon gold"><i class="fas fa-bullseye"></i></div>
+          <h3>Goal Tracker</h3>
+          <p>Set financial goals — vacation, emergency fund, gadget — and track progress as you save. Link goals to your wallet and auto-deduct contributions.</p>
+          <div class="feat-tag" style="color:#fbbf24;"><i class="fas fa-flag"></i> Milestone alerts</div>
+        </div>
+
+        <div class="feat-card accent-green reveal" style="transition-delay:.25s">
+          <div class="feat-icon green"><i class="fas fa-receipt"></i></div>
+          <h3>Transaction History</h3>
+          <p>Full filterable transaction log with category tags, amount, date, and linked account. Search, sort, and export — your complete money story.</p>
+          <div class="feat-tag green-tag"><i class="fas fa-filter"></i> Full filter</div>
+        </div>
+
+        <div class="feat-card reveal" style="transition-delay:.3s">
+          <div class="feat-icon purple"><i class="fas fa-chart-line"></i></div>
+          <h3>Analytics Dashboard</h3>
+          <p>Beautiful charts showing income vs expense trends, savings rate, and spending by category. See the full picture at a glance.</p>
+          <div class="feat-tag"><i class="fas fa-chart-bar"></i> Visual charts</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ PRIVACY ════ -->
+  <section class="privacy-section" id="privacy">
+    <div class="wrap">
+      <div class="privacy-shell">
+        <div class="privacy-copy reveal-left">
+          <div class="section-eye">Security</div>
+          <h2 class="section-h2" style="font-size:clamp(1.8rem,3vw,2.8rem);">Banking-grade balance privacy.<br><span class="grad">Built in from day one.</span></h2>
+          <p style="color:var(--muted);line-height:1.75;margin:20px 0 28px;">Your balances are hidden by default — just like HDFC, CRED, or GPay. Each account has its own eye toggle. Switch tabs and everything auto-hides. No one sees your money unless you choose to reveal it.</p>
+
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="meta-item"><i class="fas fa-check-circle"></i> Hidden by default on page load</div>
+            <div class="meta-item"><i class="fas fa-check-circle"></i> Per-account individual toggle</div>
+            <div class="meta-item"><i class="fas fa-check-circle"></i> Auto-hides when you switch tabs</div>
+            <div class="meta-item"><i class="fas fa-check-circle"></i> OTP + Google OAuth secure login</div>
           </div>
         </div>
 
-        <!-- Budget donut -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-left">
-              <div class="card-icon"><i class="fas fa-pie-chart"></i></div>
-              <span class="card-title">Budget</span>
-            </div>
-            <button class="stat-card-link" onclick="window.location='budget.html'" aria-label="Manage budget">
-              <i class="fas fa-arrow-up-right-from-square"></i>
-            </button>
-          </div>
-          <div class="card-body">
-            <div class="budget-donut-wrap">
-              <div class="donut-canvas-wrap">
-                <canvas id="budgetDonut"></canvas>
-                <div class="donut-center">
-                  <small>Total</small>
-                  <span id="donutTotal">₹0</span>
-                </div>
+        <div class="privacy-visual reveal-right">
+          <div class="balance-demo">
+            <div class="balance-row">
+              <div class="bal-left">
+                <div class="bal-icon card"><i class="fas fa-credit-card"></i></div>
+                <div><div class="bal-name">HDFC Debit Card</div><div class="bal-id">•••• 7250</div></div>
+              </div>
+              <div class="bal-amount">
+                <span class="bal-masked">••••••</span>
+                <div class="bal-eye"><i class="fas fa-eye"></i></div>
               </div>
             </div>
-            <div class="budget-legend" id="budgetLegend">
-              <div class="empty-state" style="padding:16px 0">
-                <p>No expense data yet.</p>
+
+            <div class="balance-row">
+              <div class="bal-left">
+                <div class="bal-icon upi"><i class="fas fa-mobile-alt"></i></div>
+                <div><div class="bal-name">PhonePe</div><div class="bal-id">9667728560@ybl</div></div>
+              </div>
+              <div class="bal-amount">
+                <span class="bal-masked">••••••</span>
+                <div class="bal-eye"><i class="fas fa-eye"></i></div>
+              </div>
+            </div>
+
+            <div class="balance-row">
+              <div class="bal-left">
+                <div class="bal-icon bank"><i class="fas fa-university"></i></div>
+                <div><div class="bal-name">SBI Savings</div><div class="bal-id">••••••7892</div></div>
+              </div>
+              <div class="bal-amount">
+                <span class="bal-masked">••••••</span>
+                <div class="bal-eye"><i class="fas fa-eye"></i></div>
               </div>
             </div>
           </div>
-        </div>
 
-      </div><!-- /charts-row -->
-
-      <!-- Bottom row: transactions + goals -->
-      <div class="bottom-row">
-
-        <!-- Recent transactions -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-left">
-              <div class="card-icon"><i class="fas fa-clock"></i></div>
-              <span class="card-title">Recent transactions</span>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <select class="period-select" id="txAccountFilter" style="font-size:11px;padding:5px 10px;"
-                      onchange="renderRecentTransactions()">
-                <option value="all">All accounts</option>
-              </select>
-              <a href="transaction.html" class="btn btn-outline btn-sm">
-                See all <i class="fas fa-arrow-right"></i>
-              </a>
-            </div>
+          <div class="privacy-note">
+            <i class="fas fa-lock"></i>
+            Balances auto-hide when you switch tabs or leave the wallet page
           </div>
-          <div class="card-body" style="padding:0">
-            <div class="tx-table-wrap">
-              <table class="data-table" id="recentTxTable">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Payment name</th>
-                    <th>Category</th>
-                  </tr>
-                </thead>
-                <tbody id="recentTxBody">
-                  <tr><td colspan="4">
-                    <div class="empty-state"><div class="empty-state-icon">💳</div><p>No transactions yet.</p></div>
-                  </td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Saving goals -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-left">
-              <div class="card-icon"><i class="fas fa-bullseye"></i></div>
-              <span class="card-title">Saving goals</span>
-            </div>
-            <button class="stat-card-link" onclick="window.location='goals.html'" aria-label="Manage goals">
-              <i class="fas fa-arrow-up-right-from-square"></i>
-            </button>
-          </div>
-          <div class="card-body">
-            <div class="goals-list" id="goalsList">
-              <div class="empty-state">
-                <div class="empty-state-icon">🎯</div>
-                <p>No goals yet.<br><a href="goals.html" style="color:var(--primary);font-weight:600;">Add your first goal →</a></p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /bottom-row -->
-
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /app -->
-
-<!-- ── Add Transaction Modal ────────────────────── -->
-<div class="modal-overlay" id="addModal" style="display:none;" onclick="closeAddModal(event)">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" style="max-width:460px;">
-    <div class="modal-header">
-      <h2 class="modal-title" id="modalTitle">Add Transaction</h2>
-      <button class="modal-close" onclick="closeAddModal()" id="btn-modal-close"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;">
-        <button id="typeExpenseBtn" onclick="setTxType('expense')" style="padding:9px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(239,68,68,.12);color:#ef4444;border:1.5px solid #ef4444;">
-          <i class="fas fa-arrow-up"></i> Expense
-        </button>
-        <button id="typeIncomeBtn" onclick="setTxType('income')" style="padding:9px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);border:1.5px solid var(--border);">
-          <i class="fas fa-arrow-down"></i> Income
-        </button>
-      </div>
-      <input type="hidden" id="txType" value="expense">
-      <div class="form-group">
-        <label class="form-label" for="txTitle">Description</label>
-        <div class="form-input-icon">
-          <i class="fas fa-pen"></i>
-          <input type="text" class="form-input" id="txTitle" placeholder="e.g. Swiggy order, Salary credited">
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group">
-          <label class="form-label" for="txAmount">Amount</label>
-          <div class="form-input-icon">
-            <i class="fas fa-rupee-sign"></i>
-            <input type="number" class="form-input" id="txAmount" placeholder="0.00" min="0" step="0.01" oninput="updateBalancePreview()">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="txDate">Date</label>
-          <div class="form-input-icon">
-            <i class="fas fa-calendar-alt"></i>
-            <input type="date" class="form-input" id="txDate">
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="txCategory">Category</label>
-        <select class="form-input" id="txCategory"></select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Pay From <span style="font-size:11px;color:var(--muted);font-weight:400;">(optional - auto-updates balance)</span></label>
-        <select class="form-input" id="txWalletId" onchange="onWalletSelect()">
-          <option value="">-- No wallet selected --</option>
-        </select>
-        <div id="walletBalancePreview" style="display:none;margin-top:8px;padding:8px 12px;background:var(--surface-2);border-radius:10px;font-size:12px;color:var(--muted);align-items:center;gap:6px;">
-          <i class="fas fa-wallet" style="color:var(--primary);"></i>
-          <span id="walletBalanceText">Available: 0</span>
-          <span style="margin-left:auto;font-size:10px;opacity:.6;">balance will auto-update</span>
         </div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="addTransaction()" id="btn-add-tx">
-        <i class="fas fa-plus"></i> Add
-      </button>
+  </section>
+
+  <!-- ════ HOW IT WORKS ════ -->
+  <section class="how" id="how">
+    <div class="wrap">
+      <div class="section-eye">How it Works</div>
+      <h2 class="section-h2">Up and running<br>in 3 simple steps.</h2>
+
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-num">01</div>
+          <div class="step-icon"><i class="fas fa-user-plus"></i></div>
+          <h3>Create Your Account</h3>
+          <p>Sign up with email OTP or Google in seconds. No credit card. No forms. Just you and your money.</p>
+          <div class="step-connector"><i class="fas fa-arrow-right"></i></div>
+        </div>
+
+        <div class="step-card reveal" style="transition-delay:.15s">
+          <div class="step-num">02</div>
+          <div class="step-icon"><i class="fas fa-wallet"></i></div>
+          <h3>Link Your Accounts</h3>
+          <p>Add your debit/credit cards, UPI IDs, and bank accounts. Set opening balances. Everything stays in sync.</p>
+          <div class="step-connector"><i class="fas fa-arrow-right"></i></div>
+        </div>
+
+        <div class="step-card reveal" style="transition-delay:.3s">
+          <div class="step-num">03</div>
+          <div class="step-icon"><i class="fas fa-brain"></i></div>
+          <h3>Let AI Do the Work</h3>
+          <p>Log transactions, track goals, set budgets — and let our AI surface insights to help you save and grow faster.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ TECH STACK ════ -->
+  <section class="tech" id="tech">
+    <div class="wrap">
+      <div class="section-eye">Built With</div>
+      <h2 class="section-h2">Production-grade stack.<br>Zero compromises.</h2>
+
+      <div class="tech-wrap">
+        <div class="tech-badge"><i class="fab fa-node-js"></i> Node.js + Express</div>
+        <div class="tech-badge"><i class="fas fa-database"></i> MongoDB + Mongoose</div>
+        <div class="tech-badge"><i class="fab fa-google"></i> Google OAuth 2.0</div>
+        <div class="tech-badge"><i class="fas fa-key"></i> OTP Email Auth</div>
+        <div class="tech-badge"><i class="fas fa-credit-card"></i> Razorpay Integration</div>
+        <div class="tech-badge"><i class="fas fa-brain"></i> ML Budget Prediction</div>
+        <div class="tech-badge"><i class="fas fa-bell"></i> Real-time Alerts</div>
+        <div class="tech-badge"><i class="fas fa-shield-alt"></i> Session Security</div>
+        <div class="tech-badge"><i class="fas fa-chart-line"></i> Chart.js Analytics</div>
+        <div class="tech-badge"><i class="fas fa-mobile-alt"></i> UPI Verification</div>
+        <div class="tech-badge"><i class="fab fa-html5"></i> Vanilla JS Frontend</div>
+        <div class="tech-badge"><i class="fas fa-lock"></i> Privacy-First Design</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ CTA ════ -->
+  <section class="cta-section">
+    <div class="wrap">
+      <div class="cta-shell reveal">
+        <h2>Ready to take control<br>of your finances?</h2>
+        <p>Join thousands of smart Indians who track, save, and grow with FinanceAI every day.</p>
+        <div class="cta-actions">
+          <button class="btn-cta-primary" style="cursor: default; opacity: 0.8;" disabled>
+            Get Started Free <i class="fas fa-arrow-right"></i>
+          </button>
+          <a href="login.html" class="btn btn-ghost btn-hero">
+            Sign In Instead
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ════ FOOTER ════ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="nav-logo-mark" style="width:28px;height:28px;border-radius:8px;font-size:11px;background:linear-gradient(135deg,var(--accent),var(--green));display:grid;place-items:center;color:#000;">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        FinanceAI
+      </div>
+
+      <p class="footer-copy">© 2026 FinanceAI. Built with ❤️ for smart money management.</p>
+
+      <ul class="footer-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how">How it Works</a></li>
+        <li><a href="login.html">Sign In</a></li>
+      </ul>
     </div>
   </div>
-</div>
+</footer>
 
-<!-- ── Chat FAB ─────────────────────────────────────────────── -->
-<button class="chat-fab" id="chatFab" onclick="toggleChat()" aria-label="Open AI assistant"
-  style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;
-         background:var(--primary);color:#fff;border:none;border-radius:50%;
-         cursor:pointer;display:flex;align-items:center;justify-content:center;
-         font-size:20px;z-index:999;box-shadow:var(--shadow-lg);
-         transition:transform .2s,box-shadow .2s;">
-  <i class="fas fa-robot"></i>
-  <span style="position:absolute;top:5px;right:5px;width:10px;height:10px;
-               background:#22c55e;border-radius:50%;border:2px solid #fff;"></span>
-</button>
-
-<!-- ── Chat window ──────────────────────────────────────────── -->
-<div id="chatWindow" style="
-  display:none;position:fixed;bottom:88px;right:24px;
-  width:360px;height:480px;background:var(--surface);
-  border:1px solid var(--border);border-radius:var(--radius-xl);
-  z-index:998;flex-direction:column;overflow:hidden;
-  box-shadow:var(--shadow-lg);">
-  <div style="background:var(--indigo-900);padding:14px 16px;display:flex;align-items:center;gap:10px;">
-    <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);
-                display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;">
-      <i class="fas fa-robot"></i>
-    </div>
-    <div>
-      <div style="color:#fff;font-size:13px;font-weight:600;">Finance AI</div>
-      <div style="color:rgba(255,255,255,.5);font-size:10px;">Always here to help</div>
-    </div>
-    <button onclick="toggleChat()" id="btn-chat-close" style="margin-left:auto;background:rgba(255,255,255,.1);
-      border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:12px;">
-      <i class="fas fa-times"></i>
-    </button>
-  </div>
-  <div id="chatMessages" style="flex:1;overflow-y:auto;padding:12px;display:flex;
-       flex-direction:column;gap:8px;background:var(--bg);">
-    <div class="msg bot">
-      <div class="msg-bubble bot-bubble" style="background:var(--surface);border:1px solid var(--border);
-           padding:10px 13px;border-radius:14px 14px 14px 4px;font-size:12px;line-height:1.6;color:var(--text);">
-        Hello! I'm your AI Finance Assistant. Ask me about budgeting, investing, SIP, FD, or anything finance related!
-      </div>
-    </div>
-  </div>
-  <div id="chatSuggestions" style="padding:0 12px 8px;display:flex;gap:5px;flex-wrap:wrap;background:var(--bg);">
-    <button onclick="sendSuggestion('What is SIP?')" style="background:var(--surface);border:1px solid var(--border);
-      color:var(--text);padding:4px 10px;border-radius:999px;font-size:10px;font-weight:500;cursor:pointer;">
-      What is SIP?
-    </button>
-    <button onclick="sendSuggestion('How to budget?')" style="background:var(--surface);border:1px solid var(--border);
-      color:var(--text);padding:4px 10px;border-radius:999px;font-size:10px;font-weight:500;cursor:pointer;">
-      Budget tips
-    </button>
-    <button onclick="sendSuggestion('Mutual funds vs FD?')" style="background:var(--surface);border:1px solid var(--border);
-      color:var(--text);padding:4px 10px;border-radius:999px;font-size:10px;font-weight:500;cursor:pointer;">
-      MF vs FD
-    </button>
-  </div>
-  <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;">
-    <input type="text" id="chatInput" placeholder="Ask a finance question…"
-      onkeydown="if(event.key==='Enter')sendChat()"
-      style="flex:1;height:34px;padding:0 12px;border:1px solid var(--border);border-radius:999px;
-             font-size:12px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;">
-    <button id="chatSendBtn" onclick="sendChat()"
-      style="width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;border:none;
-             cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;
-             flex-shrink:0;">
-      <i class="fas fa-paper-plane"></i>
-    </button>
-  </div>
-</div>
-
-<div class="toast-container"></div>
-
-<script src="app.js"></script>
 <script>
-  // ── State ────────────────────────────────────────────────────
-  let email = '';
-  let allTransactions = [];
-  let monthlyStats = [];
-  let moneyFlowChart = null;
-  let budgetDonutChart = null;
+  /* ─── 1. SCROLL REVEAL OBSERVER ─────────────────────────────── */
+  const revealClasses = '.reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-blur';
 
-  const CATEGORY_COLORS = {
-    Salary: '#7c3aed', Groceries: '#06b6d4', Food: '#f59e0b',
-    Shopping: '#ec4899', Rent: '#6366f1', Travel: '#10b981',
-    Medical: '#ef4444', Entertainment: '#8b5cf6', Investment: '#14b8a6'
-  };
+  const revealObserver = new IntersectionObserver(
+    (entries) => entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        revealObserver.unobserve(e.target); // fire once
+      }
+    }),
+    { threshold: 0.1, rootMargin: '0px 0px -48px 0px' }
+  );
 
-  const CATEGORY_ICONS = {
-    Salary: 'fa-sack-dollar', Groceries: 'fa-basket-shopping',
-    Food: 'fa-utensils', Shopping: 'fa-bag-shopping',
-    Rent: 'fa-house', Travel: 'fa-plane-departure',
-    Medical: 'fa-heart-pulse', Entertainment: 'fa-film',
-    Investment: 'fa-chart-line', default: 'fa-credit-card'
-  };
+  document.querySelectorAll(revealClasses).forEach(el => revealObserver.observe(el));
 
-  // ── Init ─────────────────────────────────────────────────────
-  window.addEventListener('DOMContentLoaded', async () => {
-    email = APP.initTopbar();
-    if (!email) return;
-    document.body.classList.add('ready');
-    await loadDashboard();
+  /* ─── 2. AUTO-STAGGER GRID CHILDREN ─────────────────────────── */
+  // For every grid/list, stagger each child that is a reveal element
+  document.querySelectorAll('.features-grid, .steps-grid, .tech-wrap, .stats-grid').forEach(grid => {
+    const children = [...grid.children].filter(c =>
+      c.classList.contains('reveal') ||
+      c.classList.contains('reveal-left') ||
+      c.classList.contains('reveal-right') ||
+      c.classList.contains('reveal-scale') ||
+      c.classList.contains('tech-badge')
+    );
+    children.forEach((child, i) => {
+      // Add delay class d1–d6, cycling
+      if (i > 0) {
+        const cls = 'd' + Math.min(i, 6);
+        child.classList.add(cls);
+      }
+    });
   });
 
-  async function loadDashboard() {
-    await Promise.all([
-      loadStats(),
-      loadMonthlyStats(),
-      loadGoals(),
-      loadAIInsight()
-    ]);
-    renderRecentTransactions();
+  /* ─── 3. TECH BADGES — auto reveal with stagger ─────────────── */
+  document.querySelectorAll('.tech-badge').forEach((badge, i) => {
+    badge.classList.add('reveal');
+    revealObserver.observe(badge);
+  });
+
+  /* ─── 4. ANIMATED NUMBER COUNTERS ───────────────────────────── */
+  function countUp(el, target, prefix, suffix, decimals) {
+    let start = null;
+    const dur = 2000;
+    const raf = ts => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 4); // ease-out quartic
+      const val = eased * target;
+      el.textContent = prefix + (decimals
+        ? val.toFixed(decimals)
+        : Math.floor(val).toLocaleString('en-IN')) + suffix;
+      if (p < 1) requestAnimationFrame(raf);
+      else el.textContent = prefix + (decimals ? target.toFixed(decimals) : target.toLocaleString('en-IN')) + suffix;
+    };
+    requestAnimationFrame(raf);
   }
 
-  // ── Stats ─────────────────────────────────────────────────────
-  async function loadStats() {
-    try {
-      const [current, monthly] = await Promise.all([
-        APP.apiGet('/stats', email),
-        APP.apiGet('/monthly-stats', email)
-      ]);
+  const bigNums = document.querySelectorAll('.big-num');
+  let statsFired = false;
 
-      monthlyStats = monthly;
-
-      // ── Fi Money style stats ─────────────────────────────────
-      const walletBalance  = current.walletBalance  || 0;
-      const monthSpent     = current.monthSpent     || 0;
-      const savingsRate    = current.savingsRate    || 0;
-      const goalsProgress  = current.goalsProgress  || 0;
-      // legacy (for charts)
-      const income  = current.income  || 0;
-      const expense = current.expense || 0;
-
-      // ── Stat cards ────────────────────────────────────────────
-      APP.countUp(document.getElementById('statBalance'), walletBalance);
-
-      // Month Spent: animate with ₹ prefix
-      APP.countUp(document.getElementById('statExpense'), monthSpent);
-
-      // Savings Rate: show as % (no ₹)
-      const savEl = document.getElementById('statSavings');
-      if (savEl) {
-        savEl.innerHTML = `${savingsRate}<span class="decimal">%</span>`;
-      }
-
-      // Goals Progress: show as %
-      const goalsEl = document.getElementById('statGoals');
-      if (goalsEl) {
-        goalsEl.innerHTML = `${goalsProgress}<span class="decimal">%</span>`;
-      }
-
-      // Change badges
-      const now = new Date();
-      const currM = monthly.find(m => m.month === now.getMonth() + 1 && m.year === now.getFullYear()) || {};
-      const prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const prevM = monthly.find(m => m.month === prevD.getMonth() + 1 && m.year === prevD.getFullYear()) || {};
-
-      document.getElementById('expenseChange').innerHTML = APP.changeBadge(currM.expense, prevM.expense);
-      document.getElementById('savingsChange').innerHTML =
-        `<span style="font-size:11px;color:var(--muted);"><i class="fas fa-chart-line"></i> Percentage of income saved</span>`;
-
-      // Fetch all transactions for table
-      allTransactions = await APP.apiGet('/transactions', email);
-      renderRecentTransactions();
-      renderBudgetDonut(allTransactions);
-    } catch(e) { console.error('Stats error', e); }
-  }
-
-  // ── Money Flow Chart ──────────────────────────────────────────
-  async function loadMonthlyStats() {
-    try {
-      const data = monthlyStats.length ? monthlyStats : await APP.apiGet('/monthly-stats', email);
-      renderMoneyFlow(data);
-    } catch(e) { console.error('Monthly stats error', e); }
-  }
-
-  function renderMoneyFlow(data) {
-    const labels   = data.map(d => APP.monthName(d.month));
-    const incomes  = data.map(d => d.income);
-    const expenses = data.map(d => d.expense);
-
-    if (moneyFlowChart) moneyFlowChart.destroy();
-    const ctx = document.getElementById('moneyFlowChart').getContext('2d');
-
-    moneyFlowChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'Income',
-            data: incomes,
-            backgroundColor: 'rgba(124,58,237,0.85)',
-            borderRadius: 6,
-            borderSkipped: false,
-            barPercentage: 0.55
-          },
-          {
-            label: 'Expense',
-            data: expenses,
-            backgroundColor: 'rgba(221,214,254,0.9)',
-            borderRadius: 6,
-            borderSkipped: false,
-            barPercentage: 0.55
-          }
-        ]
-      },
-      options: {
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => ` ${ctx.dataset.label}: ${APP.fmtCurrency(ctx.raw)}`
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { font: { family: 'Inter', size: 11 }, color: '#9ca3af' }
-          },
-          y: {
-            grid: { color: 'rgba(0,0,0,.05)' },
-            ticks: {
-              font: { family: 'Inter', size: 11 }, color: '#9ca3af',
-              callback: v => APP.getCurrencySymbol() + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v)
-            },
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  }
-
-  // ── Budget Donut ──────────────────────────────────────────────
-  function renderBudgetDonut(txs) {
-    const expenses   = txs.filter(t => t.type === 'expense');
-    const catMap     = {};
-    expenses.forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + Number(t.amount); });
-    const labels     = Object.keys(catMap);
-    const values     = Object.values(catMap);
-    const total      = values.reduce((a, b) => a + b, 0);
-
-    document.getElementById('donutTotal').textContent = APP.fmtCurrency(total);
-
-    const colors = labels.map(l => CATEGORY_COLORS[l] || '#a78bfa');
-
-    if (budgetDonutChart) budgetDonutChart.destroy();
-    const ctx = document.getElementById('budgetDonut').getContext('2d');
-
-    if (!labels.length) {
-      document.getElementById('budgetLegend').innerHTML =
-        '<div class="empty-state" style="padding:12px 0"><p>No expense data yet.</p></div>';
-      return;
-    }
-
-    budgetDonutChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
-      options: {
-        maintainAspectRatio: false, cutout: '72%',
-        plugins: { legend: { display: false } }
-      }
-    });
-
-    // Legend
-    document.getElementById('budgetLegend').innerHTML = labels.map((l, i) => `
-      <div class="budget-legend-item">
-        <span class="budget-legend-dot" style="background:${colors[i]}"></span>
-        <span class="budget-legend-name">${l}</span>
-        <span class="budget-legend-amount">${APP.fmtCurrency(values[i])}</span>
-      </div>`).join('');
-  }
-
-  // ── Recent transactions ───────────────────────────────────────
-  function renderRecentTransactions() {
-    const tbody  = document.getElementById('recentTxBody');
-    const recent = allTransactions.slice(0, 10);
-
-    if (!recent.length) {
-      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">
-        <div class="empty-state-icon">💳</div>
-        <p>No transactions yet.<br>Add your first one!</p>
-      </div></td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = recent.map(t => {
-      const type  = (t.type || 'expense').toLowerCase();
-      const sign  = type === 'income' ? '+' : '-';
-      const color = type === 'income' ? 'var(--income)' : 'var(--expense)';
-      const icon  = CATEGORY_ICONS[t.category] || CATEGORY_ICONS.default;
-      const catColor = CATEGORY_COLORS[t.category] || '#a78bfa';
-      const date  = APP.fmtDate(t.date, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-
-      return `<tr>
-        <td style="color:var(--muted);font-size:12px">${date}</td>
-        <td style="font-weight:700;color:${color}">${sign}${APP.fmtCurrency(t.amount)}</td>
-        <td>
-          <div class="tx-entity">
-            <div class="tx-entity-icon" style="background:${catColor}22">
-              <i class="fas ${icon}" style="color:${catColor}"></i>
-            </div>
-            <div>
-              <div class="tx-entity-name">${t.title || t.description || 'Transaction'}</div>
-              <div class="tx-entity-method">${t.category}</div>
-            </div>
-          </div>
-        </td>
-        <td><span class="badge badge-purple">${t.category}</span></td>
-      </tr>`;
-    }).join('');
-  }
-
-  // ── Goals ─────────────────────────────────────────────────────
-  async function loadGoals() {
-    try {
-      const goals = await APP.apiGet('/goals', email);
-      const list  = document.getElementById('goalsList');
-
-      if (!goals.length) {
-        list.innerHTML = `<div class="empty-state">
-          <div class="empty-state-icon">🎯</div>
-          <p>No goals yet.<br><a href="goals.html" style="color:var(--primary);font-weight:600;">Add your first goal →</a></p>
-        </div>`;
-        return;
-      }
-
-      list.innerHTML = goals.slice(0, 4).map(g => {
-        const pct  = Math.min(100, Math.round((g.savedAmount / g.targetAmount) * 100)) || 0;
-        const fill = pct >= 100 ? 'success' : pct >= 70 ? '' : pct >= 40 ? 'warning' : '';
-        return `
-        <div class="goal-item">
-          <div class="goal-item-top">
-            <span class="goal-item-name">${g.icon} ${g.title}</span>
-            <span class="goal-item-amount">${APP.fmtCurrency(g.targetAmount)}</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill ${fill}" style="width:${pct}%"></div>
-          </div>
-          <div class="goal-item-pct">${pct}%</div>
-        </div>`;
-      }).join('');
-    } catch(e) { console.error('Goals error', e); }
-  }
-
-  // ── AI Insight ────────────────────────────────────────────────
-  async function loadAIInsight() {
-    const el      = document.getElementById('aiInsight');
-    const badge   = document.getElementById('mlStatusBadge');
-    const metaRow = document.getElementById('mlMetaRow');
-    const btn     = document.getElementById('btn-refresh-insight');
-
-    el.textContent = 'Running ML model + AI analysis…';
-    badge.style.display = 'none';
-    metaRow.style.display = 'none';
-    if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true; }
-
-    try {
-      const [s, txs] = await Promise.all([
-        APP.apiGet('/stats', email),
-        APP.apiGet('/transactions', email)
-      ]);
-
-      const catMap = {};
-      txs.filter(t => t.type === 'expense')
-         .forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + Number(t.amount); });
-      const topCat = Object.keys(catMap).sort((a, b) => catMap[b] - catMap[a])[0] || 'General';
-
-      // ── Call smart-analysis (ML + Groq combined) ──
-      const data = await APP.apiPost('/smart-analysis', {
-        income: s.income || 0,
-        expense: s.expense || 0,
-        savings: s.savings || 0,
-        categories: { topCategory: topCat }
+  new IntersectionObserver(([e]) => {
+    if (e.isIntersecting && !statsFired) {
+      statsFired = true;
+      const configs = [
+        { el: bigNums[0], target: 10,   prefix: '₹', suffix: 'M+',  decimals: 0 },
+        { el: bigNums[1], target: 6,    prefix: '',  suffix: '',     decimals: 0 },
+        { el: bigNums[2], target: 99,   prefix: '',  suffix: '%',    decimals: 0 },
+        { el: bigNums[3], target: 0,    prefix: '',  suffix: 'ms',   decimals: 0 },
+      ];
+      configs.forEach((c, i) => {
+        if (!c.el) return;
+        c.el.textContent = c.prefix + '0' + c.suffix;
+        setTimeout(() => countUp(c.el, c.target, c.prefix, c.suffix, c.decimals), i * 150);
       });
-
-      if (data.success) {
-        const ml  = data.ml_prediction || {};
-        const ai  = data.ai_analysis   || {};
-
-        // Show main AI advice message
-        el.textContent = ai.budget_alert || ai.savings_tip || 'Finances analyzed!';
-
-        // Show ML budget badge
-        const statusColors = {
-          'Excellent': { bg: 'rgba(16,185,129,0.15)', color: '#059669' },
-          'Good':      { bg: 'rgba(16,185,129,0.15)', color: '#059669' },
-          'Moderate':  { bg: 'rgba(245,158,11,0.15)', color: '#d97706' },
-          'Warning':   { bg: 'rgba(239,68,68,0.15)',  color: '#dc2626' },
-          'Over Budget':{ bg: 'rgba(239,68,68,0.2)', color: '#dc2626' }
-        };
-        const sc = statusColors[ml.budget_status] || { bg:'rgba(124,58,237,0.1)', color:'var(--primary)' };
-        badge.textContent    = ml.budget_status || 'Analyzed';
-        badge.style.background = sc.bg;
-        badge.style.color    = sc.color;
-        badge.style.display  = 'inline-flex';
-
-        // Show ML meta row
-        const fmt = v => '₹' + Math.round(v || 0).toLocaleString('en-IN');
-        document.getElementById('mlLimit').textContent     = fmt(ml.safe_spending_limit);
-        document.getElementById('mlRemaining').textContent = fmt(ml.remaining_budget);
-        document.getElementById('mlUsed').textContent      = (ml.remaining_budget < 0 ? 'Over' : 'Within') + ' limit';
-        metaRow.style.display = 'flex';
-
-        // If we have SIP/FD tips, show as tooltip on badge
-        if (ai.sip_suggestion) {
-          badge.title = `SIP: ${ai.sip_suggestion} | FD: ${ai.fd_suggestion || ''}`;
-        }
-      } else {
-        el.textContent = 'Add some transactions to get AI-powered insights!';
-      }
-    } catch(e) {
-      console.error('Smart analysis error', e);
-      el.textContent = 'Add more transactions to unlock AI analysis!';
-    } finally {
-      if (btn) { btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh'; btn.disabled = false; }
     }
-  }
+  }, { threshold: 0.3 }).observe(document.querySelector('.stats-strip'));
 
-  // ── Smart categories
-  const CATEGORIES = {
-    expense: [
-      {v:'Groceries',l:'Groceries'},{v:'Food',l:'Food & Drinks'},
-      {v:'Shopping',l:'Shopping'},{v:'Rent',l:'Rent / Bills'},
-      {v:'Travel',l:'Travel'},{v:'Medical',l:'Medical'},
-      {v:'Entertainment',l:'Entertainment'},{v:'Investment',l:'Investment'},
-      {v:'Utilities',l:'Utilities'},{v:'Education',l:'Education'},{v:'Other',l:'Other'},
-    ],
-    income: [
-      {v:'Salary',l:'Salary'},{v:'Freelance',l:'Freelance'},
-      {v:'Business',l:'Business'},{v:'Dividend',l:'Dividend'},
-      {v:'Gift',l:'Gift / Transfer'},{v:'Cashback',l:'Cashback / Refund'},
-      {v:'Rental',l:'Rental Income'},{v:'Other',l:'Other Income'},
-    ]
-  };
-let userWallets = [];
-
-  function setTxType(type) {
-    document.getElementById('txType').value = type;
-    var expBtn = document.getElementById('typeExpenseBtn');
-    var incBtn = document.getElementById('typeIncomeBtn');
-    if (type === 'expense') {
-      expBtn.style.cssText = 'padding:9px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(239,68,68,.12);color:#ef4444;border:1.5px solid #ef4444;';
-      incBtn.style.cssText = 'padding:9px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);border:1.5px solid var(--border);';
+  /* ─── 5. NAV SCROLL GLOW ─────────────────────────────────────── */
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 80) {
+      nav.style.background = 'rgba(0,0,0,0.88)';
+      nav.style.borderColor = 'rgba(255,255,255,0.12)';
     } else {
-      incBtn.style.cssText = 'padding:9px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(16,185,129,.12);color:#10b981;border:1.5px solid #10b981;';
-      expBtn.style.cssText = 'padding:9px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);border:1.5px solid var(--border);';
+      nav.style.background = 'rgba(0,0,0,0.72)';
+      nav.style.borderColor = 'rgba(255,255,255,0.08)';
     }
-    var sel = document.getElementById('txCategory');
-    sel.innerHTML = CATEGORIES[type].map(function(c){ return '<option value="' + c.v + '">' + c.l + '</option>'; }).join('');
-    updateBalancePreview();
-  }
+  }, { passive: true });
 
-  function updateBalancePreview() {
-    var walletId = document.getElementById('txWalletId') ? document.getElementById('txWalletId').value : '';
-    var amount   = Number(document.getElementById('txAmount') ? document.getElementById('txAmount').value : 0) || 0;
-    var type     = document.getElementById('txType') ? document.getElementById('txType').value : 'expense';
-    var preview  = document.getElementById('walletBalancePreview');
-    var balText  = document.getElementById('walletBalanceText');
-    if (!walletId || !preview) { if(preview) preview.style.display = 'none'; return; }
-    var w = userWallets.find(function(w){ return w._id === walletId; });
-    if (!w) { preview.style.display = 'none'; return; }
-    var current = w.balance || 0;
-    var newBal  = type === 'expense' ? Math.max(0, current - amount) : current + amount;
-    var color   = type === 'expense' ? '#ef4444' : '#10b981';
-    var arrow   = type === 'expense' ? 'down' : 'up';
-    balText.innerHTML =
-      'Available: <b>' + APP.formatCurrencyWithSettings(current, 2) + '</b>' +
-      (amount > 0 ? ' &rarr; <b style="color:' + color + '">' + APP.formatCurrencyWithSettings(newBal, 2) + '</b>' : '');
-    preview.style.display = 'flex';
-  }
-
-  function onWalletSelect() { updateBalancePreview(); }
-
-  // ── Add Transaction Modal
-  async function openAddModal() {
-    document.getElementById('addModal').style.display = 'flex';
-    document.getElementById('txTitle').focus();
-    document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
-    setTxType('expense');
-    try {
-      userWallets = await APP.apiGet('/wallet', email);
-      var sel = document.getElementById('txWalletId');
-      if (!sel) return;
-      sel.innerHTML = '<option value="">-- Select wallet (optional) --</option>' +
-        userWallets.map(function(w) {
-          var lbl = w.cardLast4 ? ((w.name||w.cardholderName||'Card') + ' ****' + w.cardLast4) : (w.upiId || w.name || 'Account');
-          var bal = APP.formatCurrencyWithSettings(w.balance || 0, 2);
-          return '<option value="' + w._id + '">' + lbl + '  [ ' + bal + ' ]</option>';
-        }).join('');
-      // Auto-select if only one wallet
-      if (userWallets.length === 1) {
-        sel.value = userWallets[0]._id;
-        updateBalancePreview();
-      }
-    } catch(e) { console.warn('Wallets not loaded', e); }
-  }
-
-  function closeAddModal(e) {
-    if (!e || e.target === document.getElementById('addModal')) {
-      document.getElementById('addModal').style.display = 'none';
-    }
-  }
-
-  async function addTransaction() {
-    var title    = document.getElementById('txTitle').value.trim();
-    var amount   = document.getElementById('txAmount').value;
-    var type     = document.getElementById('txType').value;
-    var category = document.getElementById('txCategory').value;
-    var walletSel = document.getElementById('txWalletId');
-    var walletId = walletSel ? walletSel.value : '';
-    var dateVal  = document.getElementById('txDate') ? document.getElementById('txDate').value : '';
-    var date     = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
-
-    if (!title)                          return APP.toast('Please enter a description', 'error');
-    if (!amount || Number(amount) <= 0)  return APP.toast('Please enter a valid amount', 'error');
-
-    var btn = document.getElementById('btn-add-tx');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
-    try {
-      var payload = {
-        title: title, description: title,
-        amount: Number(amount), category: category,
-        type: type, email: email, date: date
-      };
-      if (walletId) payload.walletId = walletId;
-
-      var result = await APP.apiPost('/add-transaction', payload);
-
-      if (result && result.updatedWallet) {
-        var newBal = result.updatedWallet.newBalance;
-        var wName  = result.updatedWallet.name || 'Wallet';
-        var sym    = type === 'expense' ? '-' : '+';
-        APP.toast(
-          sym + APP.formatCurrencyWithSettings(amount) +
-          ' | ' + wName + ' balance: ' + APP.formatCurrencyWithSettings(newBal, 2),
-          'success'
-        );
+  /* ─── 6. BALANCE DEMO TOGGLE ─────────────────────────────────── */
+  const amounts = ['₹ 24,500', '₹ 5,000', '₹ 1,21,000'];
+  document.querySelectorAll('.bal-eye').forEach((btn, idx) => {
+    btn.addEventListener('click', function () {
+      const mask  = this.closest('.balance-row').querySelector('.bal-masked');
+      const shown = this.dataset.shown === '1';
+      if (shown) {
+        mask.textContent = '••••••';
+        mask.style.letterSpacing = '4px';
+        this.innerHTML = '<i class="fas fa-eye"></i>';
+        this.dataset.shown = '0';
       } else {
-        APP.toast('Transaction added!', 'success');
+        mask.textContent = amounts[idx] || '₹ ••••';
+        mask.style.letterSpacing = 'normal';
+        this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        this.dataset.shown = '1';
       }
+    });
+  });
 
-      document.getElementById('txTitle').value  = '';
-      document.getElementById('txAmount').value = '';
-      if (walletSel) walletSel.value = '';
-      document.getElementById('walletBalancePreview').style.display = 'none';
-      closeAddModal();
-      await loadDashboard();
-    } catch(ex) {
-      APP.toast('Failed to save transaction!', 'error');
-      console.error(ex);
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-plus"></i> Add';
-    }
-  }
+  /* ─── 7. SECTION HEADER AUTO-REVEAL ──────────────────────────── */
+  document.querySelectorAll('.section-eye, .section-h2, .section-p').forEach(el => {
+    el.classList.add('reveal');
+    revealObserver.observe(el);
+  });
 
-
-  // ── Search ────────────────────────────────────────────────────
-  function searchTransactions(q) {
-    if (!q) { renderRecentTransactions(); return; }
-    const filtered = allTransactions.filter(t =>
-      (t.title || t.description || '').toLowerCase().includes(q.toLowerCase()) ||
-      (t.category || '').toLowerCase().includes(q.toLowerCase())
-    );
-    const tbody = document.getElementById('recentTxBody');
-    if (!filtered.length) {
-      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>No results for "${q}"</p></div></td></tr>`;
-      return;
-    }
-    const saved = allTransactions;
-    allTransactions = filtered;
-    renderRecentTransactions();
-    allTransactions = saved;
-  }
-
-  // ── Chat ──────────────────────────────────────────────────────
-  function toggleChat() {
-    const win  = document.getElementById('chatWindow');
-    const icon = document.getElementById('chatFab').querySelector('i');
-    const open = win.style.display !== 'flex';
-    win.style.display = open ? 'flex' : 'none';
-    icon.className = open ? 'fas fa-times' : 'fas fa-robot';
-    if (open) document.getElementById('chatInput').focus();
-  }
-
-  function sendSuggestion(text) {
-    document.getElementById('chatInput').value = text;
-    document.getElementById('chatSuggestions').style.display = 'none';
-    sendChat();
-  }
-
-  async function sendChat() {
-    const input = document.getElementById('chatInput');
-    const msg   = input.value.trim();
-    if (!msg) return;
-    input.value = '';
-    document.getElementById('chatSendBtn').disabled = true;
-
-    appendChatMsg('user', msg);
-    const tid = 'typing-' + Date.now();
-    appendTyping(tid);
-
-    try {
-      // ── Build financial context for personalized answers ──
-      const stats = await APP.apiGet('/stats', email).catch(() => ({}));
-      const payload = {
-        message: msg,
-        email:   email || '',
-        context: {
-          income:   stats.income   || 0,
-          expense:  stats.expense  || 0,
-          savings:  stats.savings  || 0,
-          monthSpent:  stats.monthSpent  || 0,
-          savingsRate: stats.savingsRate || 0,
-          walletBalance: stats.walletBalance || 0
-        }
-      };
-
-      const data = await APP.apiPost('/ai-chat', payload);
-      removeTyping(tid);
-      appendChatMsg('bot', data.reply || 'Something went wrong.');
-    } catch(e) {
-      removeTyping(tid);
-      const errMsg = e.message?.includes('Failed to fetch')
-        ? '⚠️ Cannot connect to server. Please make sure the backend is running on port 5000.'
-        : e.message?.includes('500')
-        ? '⚠️ AI service error. GROQ API may be down — please try again in a moment.'
-        : '⚠️ Something went wrong. Please try again.';
-      appendChatMsg('bot', errMsg);
-    }
-
-    document.getElementById('chatSendBtn').disabled = false;
-  }
-
-  function appendChatMsg(role, text) {
-    const c    = document.getElementById('chatMessages');
-    const isBt = role === 'bot';
-    const d    = document.createElement('div');
-    d.style.cssText = `display:flex;flex-direction:column;align-items:${isBt ? 'flex-start':'flex-end'};gap:3px;max-width:84%;align-self:${isBt ? 'flex-start':'flex-end'}`;
-    d.innerHTML = `
-      <div style="padding:9px 12px;border-radius:${isBt ? '14px 14px 14px 4px':'14px 14px 4px 14px'};
-                  font-size:12px;line-height:1.6;
-                  ${isBt ? 'background:var(--surface);border:1px solid var(--border);color:var(--text);'
-                         : 'background:var(--primary);color:#fff;font-weight:500;'}">${text}</div>
-      <div style="font-size:9px;color:var(--muted-2);padding:0 4px;">${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>`;
-    c.appendChild(d);
-    c.scrollTop = c.scrollHeight;
-  }
-
-  function appendTyping(id) {
-    const c = document.getElementById('chatMessages');
-    const d = document.createElement('div');
-    d.id = id;
-    d.style.cssText = 'display:flex;gap:4px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:14px 14px 14px 4px;width:fit-content;';
-    d.innerHTML = [1,2,3].map((_, i) => `
-      <div style="width:5px;height:5px;background:var(--muted);border-radius:50%;
-                  animation:typing 1.2s ${i*.2}s infinite;"></div>`).join('');
-    if (!document.querySelector('#typing-style')) {
-      const s = document.createElement('style');
-      s.id = 'typing-style';
-      s.textContent = `@keyframes typing {0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}`;
-      document.head.appendChild(s);
-    }
-    c.appendChild(d);
-    c.scrollTop = c.scrollHeight;
-  }
-
-  function removeTyping(id) { const e = document.getElementById(id); if(e) e.remove(); }
+  /* ─── 8. FEAT-CARD hover ripple glow on mouse position ───────── */
+  document.querySelectorAll('.feat-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width  * 100).toFixed(1);
+      const y = ((e.clientY - r.top)  / r.height * 100).toFixed(1);
+      card.style.setProperty('--mx', x + '%');
+      card.style.setProperty('--my', y + '%');
+    });
+  });
 </script>
+
 </body>
 </html>
+
