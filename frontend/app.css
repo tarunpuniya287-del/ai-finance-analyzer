@@ -752,6 +752,16 @@ select.form-input { cursor: pointer; }
   .hide-xs { display: none; }
 }
 
+/* ── Responsive 2-col form grid ── */
+.form-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 500px) {
+  .form-2col { grid-template-columns: 1fr; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
